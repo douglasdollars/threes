@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 9 Test: Play Validation and Basic Turns</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h3 {
+            color: #2c5530;
+            margin-top: 0;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .test-item.fail {
+            border-left-color: #dc3545;
+        }
+        
+        .test-item.pending {
+            border-left-color: #ffc107;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .test-btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .test-btn.success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .test-btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .test-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-pass { background: #28a745; }
+        .status-fail { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+        
+        .game-preview {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+        
+        .console-output {
+            background: #212529;
+            color: #28a745;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎮 Step 9 Test Suite: Play Validation and Basic Turns</h1>
+        <p>Testing card play validation, turn mechanics, special effects, and game progression.</p>
+        
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="test-controls">
+                <button class="test-btn primary" onclick="runAllTests()">Run All Tests</button>
+                <button class="test-btn success" onclick="setupTestGame()">Setup Test Game</button>
+                <button class="test-btn warning" onclick="resetTests()">Reset Tests</button>
+                <button class="test-btn danger" onclick="clearConsole()">Clear Console</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="test-results" class="test-grid">
+                <!-- Test results will be populated here -->
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎲 Game Preview</h3>
+            <div class="game-preview" id="game-preview">
+                <p>Game will be initialized here for testing...</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Console Output</h3>
+            <div class="console-output" id="console-output">
+                <div>Console output will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // Test suite for Step 9: Play Validation and Basic Turns
+        
+        let testResults = {};
+        let testGameState = null;
+        
+        // Test definitions
+        const tests = [
+            {
+                id: 'card_play_validation',
+                name: 'Card Play Validation',
+                description: 'Test that card play validation works correctly'
+            },
+            {
+                id: 'same_rank_requirement',
+                name: 'Same Rank Requirement',
+                description: 'Only cards of same rank can be played together'
+            },
+            {
+                id: 'play_on_empty_pile',
+                name: 'Play on Empty Pile',
+                description: 'Any card can be played on empty discard pile'
+            },
+            {
+                id: 'play_higher_or_equal',
+                name: 'Play Higher or Equal',
+                description: 'Cards must be equal or higher value than top card'
+            },
+            {
+                id: 'special_card_2s',
+                name: 'Special Card: 2s (Wild)',
+                description: '2s can be played on any card'
+            },
+            {
+                id: 'special_card_10s',
+                name: 'Special Card: 10s (Clear)',
+                description: '10s can be played on any card and clear pile'
+            },
+            {
+                id: 'special_card_3s',
+                name: 'Special Card: 3s (Low)',
+                description: '3s can only be played on 2s or 3s'
+            },
+            {
+                id: 'four_of_kind_clear',
+                name: 'Four of a Kind Clear',
+                description: 'Four same rank cards clear the pile'
+            },
+            {
+                id: 'card_removal',
+                name: 'Card Removal',
+                description: 'Played cards are removed from player hand'
+            },
+            {
+                id: 'discard_pile_update',
+                name: 'Discard Pile Update',
+                description: 'Played cards are added to discard pile'
+            },
+            {
+                id: 'hand_replenishment',
+                name: 'Hand Replenishment',
+                description: 'Player hand is replenished after playing'
+            },
+            {
+                id: 'turn_progression',
+                name: 'Turn Progression',
+                description: 'Turn moves to next player after play'
+            },
+            {
+                id: 'pick_up_pile',
+                name: 'Pick Up Pile',
+                description: 'Player can pick up discard pile'
+            },
+            {
+                id: 'win_condition',
+                name: 'Win Condition',
+                description: 'Player wins when all cards are played'
+            },
+            {
+                id: 'game_over_detection',
+                name: 'Game Over Detection',
+                description: 'Game ends when only one player remains'
+            }
+        ];
+        
+        // Initialize test results
+        function initializeTests() {
+            tests.forEach(test => {
+                testResults[test.id] = { status: 'pending', message: 'Not tested yet' };
+            });
+            updateTestDisplay();
+        }
+        
+        // Update test display
+        function updateTestDisplay() {
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = tests.map(test => {
+                const result = testResults[test.id];
+                const statusClass = result.status === 'pass' ? 'status-pass' : 
+                                  result.status === 'fail' ? 'status-fail' : 'status-pending';
+                
+                return `
+                    <div class="test-item ${result.status}">
+                        <div>
+                            <span class="status-indicator ${statusClass}"></span>
+                            <strong>${test.name}</strong>
+                        </div>
+                        <div style="margin: 8px 0; font-size: 0.9rem; color: #666;">
+                            ${test.description}
+                        </div>
+                        <div style="font-size: 0.8rem; color: ${result.status === 'pass' ? '#28a745' : result.status === 'fail' ? '#dc3545' : '#ffc107'};">
+                            ${result.message}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Setup test game
+        function setupTestGame() {
+            try {
+                log('Setting up test game...');
+                
+                // Initialize game state
+                testGameState = new GameState();
+                testGameState.initializeGame(['Alice', 'Bob', 'Charlie']);
+                
+                // Deal cards
+                dealInitialCards(testGameState);
+                
+                // Set to playing phase
+                testGameState.gamePhase = GAME_PHASES.PLAYING;
+                
+                // Determine first player
+                determineFirstPlayer(testGameState);
+                
+                log(`Game setup complete. Current player: ${testGameState.getCurrentPlayer().name}`);
+                log(`Draw pile: ${testGameState.drawPile.length} cards`);
+                log(`Players: ${testGameState.players.map(p => `${p.name}(${p.getCardCount()})`).join(', ')}`);
+                
+                updateGamePreview();
+                
+                testResults.game_setup = { status: 'pass', message: 'Test game setup successfully' };
+                updateTestDisplay();
+                
+            } catch (error) {
+                log(`Error setting up test game: ${error.message}`);
+                testResults.game_setup = { status: 'fail', message: error.message };
+                updateTestDisplay();
+            }
+        }
+        
+        // Update game preview
+        function updateGamePreview() {
+            if (!testGameState) return;
+            
+            const preview = document.getElementById('game-preview');
+            const currentPlayer = testGameState.getCurrentPlayer();
+            
+            preview.innerHTML = `
+                <div><strong>Game Phase:</strong> ${testGameState.gamePhase}</div>
+                <div><strong>Current Player:</strong> ${currentPlayer.name}</div>
+                <div><strong>Draw Pile:</strong> ${testGameState.drawPile.length} cards</div>
+                <div><strong>Discard Pile:</strong> ${testGameState.discardPile.length} cards</div>
+                <div><strong>Players:</strong></div>
+                <ul>
+                    ${testGameState.players.map(p => `
+                        <li>${p.name}: Hand(${p.handCards.length}) FaceUp(${p.faceUpCards.length}) FaceDown(${p.faceDownCards.length}) - ${p.isActive ? 'Active' : 'Finished'}</li>
+                    `).join('')}
+                </ul>
+                ${testGameState.discardPile.length > 0 ? `<div><strong>Top Card:</strong> ${testGameState.discardPile[testGameState.discardPile.length - 1].toString()}</div>` : ''}
+            `;
+        }
+        
+        // Test functions
+        function testCardPlayValidation() {
+            if (!testGameState) {
+                testResults.card_play_validation = { status: 'fail', message: 'No test game available' };
+                return;
+            }
+            
+            try {
+                const gameManager = gameBoard;
+                const currentPlayer = testGameState.getCurrentPlayer();
+                
+                // Test empty selection
+                const emptyResult = gameManager.validateCardPlay([]);
+                if (emptyResult.valid) {
+                    throw new Error('Empty selection should be invalid');
+                }
+                
+                // Test valid single card
+                if (currentPlayer.handCards.length > 0) {
+                    const card = currentPlayer.handCards[0];
+                    const selectedCards = [{ card: card, id: card.id }];
+                    const result = gameManager.validateCardPlay(selectedCards);
+                    
+                    if (testGameState.discardPile.length === 0) {
+                        // Empty pile - any card should be valid
+                        if (!result.valid) {
+                            throw new Error('Any card should be valid on empty pile');
+                        }
+                    }
+                }
+                
+                testResults.card_play_validation = { status: 'pass', message: 'Card play validation working correctly' };
+                log('✓ Card play validation test passed');
+                
+            } catch (error) {
+                testResults.card_play_validation = { status: 'fail', message: error.message };
+                log(`✗ Card play validation test failed: ${error.message}`);
+            }
+        }
+        
+        function testSameRankRequirement() {
+            if (!testGameState) {
+                testResults.same_rank_requirement = { status: 'fail', message: 'No test game available' };
+                return;
+            }
+            
+            try {
+                const gameManager = gameBoard;
+                const currentPlayer = testGameState.getCurrentPlayer();
+                
+                if (currentPlayer.handCards.length >= 2) {
+                    const card1 = currentPlayer.handCards[0];
+                    const card2 = currentPlayer.handCards[1];
+                    
+                    // Test different ranks
+                    if (card1.rank !== card2.rank) {
+                        const selectedCards = [
+                            { card: card1, id: card1.id },
+                            { card: card2, id: card2.id }
+                        ];
+                        const result = gameManager.validateCardPlay(selectedCards);
+                        
+                        if (result.valid) {
+                            throw new Error('Different rank cards should not be valid together');
+                        }
+                    }
+                }
+                
+                testResults.same_rank_requirement = { status: 'pass', message: 'Same rank requirement enforced' };
+                log('✓ Same rank requirement test passed');
+                
+            } catch (error) {
+                testResults.same_rank_requirement = { status: 'fail', message: error.message };
+                log(`✗ Same rank requirement test failed: ${error.message}`);
+            }
+        }
+        
+        function testSpecialCards() {
+            if (!testGameState) {
+                testResults.special_card_2s = { status: 'fail', message: 'No test game available' };
+                testResults.special_card_10s = { status: 'fail', message: 'No test game available' };
+                testResults.special_card_3s = { status: 'fail', message: 'No test game available' };
+                return;
+            }
+            
+            try {
+                const gameManager = gameBoard;
+                
+                // Test 2s (wild)
+                const twoCard = new Card('2', '♠');
+                const kingCard = new Card('K', '♥');
+                const result2s = gameManager.canPlayOnCard(twoCard, kingCard);
+                
+                if (!result2s.valid) {
+                    throw new Error('2s should be playable on any card');
+                }
+                
+                testResults.special_card_2s = { status: 'pass', message: '2s work as wild cards' };
+                log('✓ Special card 2s test passed');
+                
+                // Test 10s (clear)
+                const tenCard = new Card('10', '♠');
+                const result10s = gameManager.canPlayOnCard(tenCard, kingCard);
+                
+                if (!result10s.valid) {
+                    throw new Error('10s should be playable on any card');
+                }
+                
+                testResults.special_card_10s = { status: 'pass', message: '10s work as clear cards' };
+                log('✓ Special card 10s test passed');
+                
+                // Test 3s (low)
+                const threeCard = new Card('3', '♠');
+                const result3s = gameManager.canPlayOnCard(threeCard, kingCard);
+                
+                if (result3s.valid) {
+                    throw new Error('3s should not be playable on high cards');
+                }
+                
+                testResults.special_card_3s = { status: 'pass', message: '3s restricted to low cards' };
+                log('✓ Special card 3s test passed');
+                
+            } catch (error) {
+                testResults.special_card_2s = { status: 'fail', message: error.message };
+                testResults.special_card_10s = { status: 'fail', message: error.message };
+                testResults.special_card_3s = { status: 'fail', message: error.message };
+                log(`✗ Special cards test failed: ${error.message}`);
+            }
+        }
+        
+        function testPickUpPile() {
+            if (!testGameState) {
+                testResults.pick_up_pile = { status: 'fail', message: 'No test game available' };
+                return;
+            }
+            
+            try {
+                const gameManager = gameBoard;
+                const currentPlayer = testGameState.getCurrentPlayer();
+                const initialHandSize = currentPlayer.handCards.length;
+                
+                // Add some cards to discard pile
+                testGameState.discardPile.push(new Card('7', '♠'));
+                testGameState.discardPile.push(new Card('8', '♥'));
+                const discardSize = testGameState.discardPile.length;
+                
+                // Test pick up pile
+                gameManager.pickUpPile();
+                
+                // Check if cards were added to hand
+                const newHandSize = currentPlayer.handCards.length;
+                if (newHandSize !== initialHandSize + discardSize) {
+                    throw new Error(`Hand size should increase by ${discardSize}, got ${newHandSize - initialHandSize}`);
+                }
+                
+                // Check if discard pile is empty
+                if (testGameState.discardPile.length !== 0) {
+                    throw new Error('Discard pile should be empty after pickup');
+                }
+                
+                testResults.pick_up_pile = { status: 'pass', message: 'Pick up pile works correctly' };
+                log('✓ Pick up pile test passed');
+                
+            } catch (error) {
+                testResults.pick_up_pile = { status: 'fail', message: error.message };
+                log(`✗ Pick up pile test failed: ${error.message}`);
+            }
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            log('🚀 Running all Step 9 tests...');
+            
+            if (!testGameState) {
+                setupTestGame();
+            }
+            
+            testCardPlayValidation();
+            testSameRankRequirement();
+            testSpecialCards();
+            testPickUpPile();
+            
+            updateTestDisplay();
+            updateGamePreview();
+            
+            const passCount = Object.values(testResults).filter(r => r.status === 'pass').length;
+            const totalCount = Object.keys(testResults).length;
+            
+            log(`\n📊 Test Summary: ${passCount}/${totalCount} tests passed`);
+            
+            if (passCount === totalCount) {
+                log('🎉 All tests passed! Step 9 implementation is working correctly.');
+            } else {
+                log('⚠️ Some tests failed. Check the results above.');
+            }
+        }
+        
+        // Reset tests
+        function resetTests() {
+            testResults = {};
+            testGameState = null;
+            initializeTests();
+            document.getElementById('game-preview').innerHTML = '<p>Game will be initialized here for testing...</p>';
+            log('Tests reset');
+        }
+        
+        // Clear console
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '<div>Console cleared...</div>';
+        }
+        
+        // Logging function
+        function log(message) {
+            const output = document.getElementById('console-output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTests();
+            log('Step 9 test suite initialized');
+            log('Click "Setup Test Game" to begin testing');
+        });
+    </script>
+</body>
+</html> 

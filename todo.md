@@ -234,31 +234,31 @@
 
 ### Card Selection Mechanics
 
-- [ ] Add click handlers for card selection/deselection
-- [ ] Create visual selection states (highlighted/selected cards)
-- [ ] Implement multiple card selection for same rank
-- [ ] Add auto-highlighting of matching rank cards
+- [x] Add click handlers for card selection/deselection
+- [x] Create visual selection states (highlighted/selected cards)
+- [x] Implement multiple card selection for same rank
+- [x] Add auto-highlighting of matching rank cards
 
 ### Selection Validation
 
-- [ ] Create `validateSelection()` function
-- [ ] Ensure only same-rank cards can be selected together
-- [ ] Clear selection when invalid cards are clicked
-- [ ] Update "Play Selected Cards" button state based on selection
+- [x] Create `validateSelection()` function
+- [x] Ensure only same-rank cards can be selected together
+- [x] Clear selection when invalid cards are clicked
+- [x] Update "Play Selected Cards" button state based on selection
 
 ### UI Feedback
 
-- [ ] Style selected cards clearly
-- [ ] Implement suggested card highlighting
-- [ ] Enable/disable "Play Selected Cards" button appropriately
-- [ ] Add selection count display
+- [x] Style selected cards clearly
+- [x] Implement suggested card highlighting
+- [x] Enable/disable "Play Selected Cards" button appropriately
+- [x] Add selection count display
 
 ### Integration
 
-- [ ] Track selected cards in current player's state
-- [ ] Clear selections on turn transitions
-- [ ] Handle selection during different game phases
-- [ ] Test multiple card selection of same rank
+- [x] Track selected cards in current player's state
+- [x] Clear selections on turn transitions
+- [x] Handle selection during different game phases
+- [x] Test multiple card selection of same rank
 
 ## ✅ Step 9: Play Validation and Basic Turns
 

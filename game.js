@@ -778,18 +778,26 @@ const setupScreen = {
     renderPileArea(pileType) {
         if (pileType === 'draw') {
             if (gameState.drawPile.length > 0) {
-                // Show face-down card for draw pile
-                return renderCard(gameState.drawPile[gameState.drawPile.length - 1], true).outerHTML;
+                // Show face-down card for draw pile with count
+                const cardHTML = renderCard(gameState.drawPile[gameState.drawPile.length - 1], true).outerHTML;
+                return `${cardHTML}<div class="pile-count">${gameState.drawPile.length}</div>`;
             } else {
-                return '<div class="empty-pile">Empty</div>';
+                return '<div class="empty-pile">Empty Draw Pile</div>';
             }
         } else if (pileType === 'discard') {
             if (gameState.discardPile.length > 0) {
-                // Show top 1-3 cards of discard pile, layered
-                const topCards = gameState.discardPile.slice(-3);
-                return topCards.map(card => renderCard(card, false).outerHTML).join('');
+                // Show top card prominently with pile info
+                const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+                const cardHTML = renderCard(topCard, false).outerHTML;
+                const pileInfo = `
+                    <div class="pile-info">
+                        <div class="pile-count">${gameState.discardPile.length} cards</div>
+                        <div class="top-card-info">Top: ${topCard.toString()}</div>
+                    </div>
+                `;
+                return `${cardHTML}${pileInfo}`;
             } else {
-                return '<div class="empty-pile">Empty</div>';
+                return '<div class="empty-pile">Empty Discard Pile<br><small>Any card can be played</small></div>';
             }
         }
         return '<div class="empty-pile">Empty</div>';
@@ -1538,21 +1546,253 @@ const setupScreen = {
             return;
         }
         
+        // Validate the play
+        const validationResult = this.validateCardPlay(selectedCards);
+        if (!validationResult.valid) {
+            this.showGameFeedback(validationResult.message, 'error');
+            return;
+        }
+        
         console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
         
-        // TODO: Implement card playing validation and logic
-        // For now, just show feedback
-        const cardNames = selectedCards.map(item => item.card.toString()).join(', ');
-        this.showGameFeedback(`Played cards: ${cardNames}`, 'success');
+        // Execute the play
+        this.executeCardPlay(selectedCards);
         
         // Clear selection after playing
         this.clearAllSelections();
+    },
+    
+    // Validate if selected cards can be played
+    validateCardPlay(selectedCards) {
+        if (selectedCards.length === 0) {
+            return { valid: false, message: 'No cards selected' };
+        }
         
-        // TODO: Remove cards from player's hand/face-up cards
-        // TODO: Add cards to discard pile
-        // TODO: Check if player needs to draw cards
-        // TODO: Check win conditions
-        // TODO: Move to next player
+        // Check if all cards are same rank (already enforced by selection, but double-check)
+        const firstRank = selectedCards[0].card.rank;
+        const allSameRank = selectedCards.every(item => item.card.rank === firstRank);
+        if (!allSameRank) {
+            return { valid: false, message: 'All selected cards must be the same rank' };
+        }
+        
+        // Get top card of discard pile
+        const topDiscardCard = gameState.discardPile.length > 0 ? 
+            gameState.discardPile[gameState.discardPile.length - 1] : null;
+        
+        // If discard pile is empty, any card can be played
+        if (!topDiscardCard) {
+            return { valid: true, message: 'Valid play on empty pile' };
+        }
+        
+        // Check if cards can be played on top of discard pile
+        return this.canPlayOnCard(selectedCards[0].card, topDiscardCard);
+    },
+    
+    // Check if a card can be played on top of another card
+    canPlayOnCard(playCard, topCard) {
+        const playValue = playCard.getValue();
+        const topValue = topCard.getValue();
+        
+        // Special rules for Threes card game:
+        // 2s are wild and can be played on anything
+        if (playCard.rank === '2') {
+            return { valid: true, message: '2s are wild cards' };
+        }
+        
+        // 10s can be played on anything and clear the pile
+        if (playCard.rank === '10') {
+            return { valid: true, message: '10s clear the pile' };
+        }
+        
+        // 3s can only be played on 3s or lower (or 2s)
+        if (playCard.rank === '3') {
+            if (topCard.rank === '2' || topCard.rank === '3') {
+                return { valid: true, message: 'Valid 3 play' };
+            }
+            return { valid: false, message: '3s can only be played on 2s or 3s' };
+        }
+        
+        // For other cards, must be equal or higher value
+        if (playValue >= topValue) {
+            return { valid: true, message: 'Valid play - equal or higher value' };
+        }
+        
+        return { valid: false, message: `Cannot play ${playCard.rank} on ${topCard.rank}` };
+    },
+    
+    // Execute the card play
+    executeCardPlay(selectedCards) {
+        const currentPlayer = gameState.getCurrentPlayer();
+        const cardNames = selectedCards.map(item => item.card.toString()).join(', ');
+        
+        // Remove cards from player's collection
+        selectedCards.forEach(item => {
+            // Find which collection the card is in
+            if (currentPlayer.handCards.find(c => c.id === item.id)) {
+                currentPlayer.removeCard(item.id, 'hand');
+            } else if (currentPlayer.faceUpCards.find(c => c.id === item.id)) {
+                currentPlayer.removeCard(item.id, 'faceUp');
+            } else if (currentPlayer.faceDownCards.find(c => c.id === item.id)) {
+                currentPlayer.removeCard(item.id, 'faceDown');
+            }
+        });
+        
+        // Add cards to discard pile
+        selectedCards.forEach(item => {
+            gameState.discardPile.push(item.card);
+        });
+        
+        console.log(`${currentPlayer.name} played: ${cardNames}`);
+        this.showGameFeedback(`Played: ${cardNames}`, 'success');
+        
+        // Check for special effects
+        const specialEffect = this.checkSpecialEffects(selectedCards);
+        
+        if (specialEffect.effect) {
+            this.handleSpecialEffect(specialEffect);
+        } else {
+            // Normal play - replenish hand and check turn progression
+            this.replenishHand();
+            this.checkTurnProgression();
+        }
+        
+        // Update display
+        this.updateGameBoardDisplay();
+    },
+    
+    // Check for special card effects
+    checkSpecialEffects(playedCards) {
+        const firstCard = playedCards[0].card;
+        
+        // 10s clear the pile
+        if (firstCard.rank === '10') {
+            return { 
+                effect: 'pile_clear', 
+                message: '10s clear the pile! Play again.',
+                continueTurn: true 
+            };
+        }
+        
+        // Check for four of a kind on discard pile
+        if (this.checkFourOfAKind()) {
+            return { 
+                effect: 'four_of_kind', 
+                message: 'Four of a kind! Pile cleared! Play again.',
+                continueTurn: true 
+            };
+        }
+        
+        // 2s are wild but don't have special effects in basic implementation
+        if (firstCard.rank === '2') {
+            return { 
+                effect: 'wild', 
+                message: '2s are wild - next player can play any card',
+                continueTurn: false 
+            };
+        }
+        
+        return { effect: null };
+    },
+    
+    // Check if top 4 cards of discard pile are same rank
+    checkFourOfAKind() {
+        if (gameState.discardPile.length < 4) return false;
+        
+        const topFour = gameState.discardPile.slice(-4);
+        const firstRank = topFour[0].rank;
+        
+        return topFour.every(card => card.rank === firstRank);
+    },
+    
+    // Handle special effects
+    handleSpecialEffect(specialEffect) {
+        console.log('Special effect:', specialEffect.message);
+        this.showGameFeedback(specialEffect.message, 'info');
+        
+        if (specialEffect.effect === 'pile_clear' || specialEffect.effect === 'four_of_kind') {
+            // Clear the discard pile
+            gameState.discardPile = [];
+            console.log('Discard pile cleared');
+        }
+        
+        if (specialEffect.continueTurn) {
+            // Player gets another turn
+            console.log(`${gameState.getCurrentPlayer().name} gets another turn`);
+            this.replenishHand();
+        } else {
+            // Normal turn progression
+            this.replenishHand();
+            this.checkTurnProgression();
+        }
+    },
+    
+    // Replenish player's hand from draw pile
+    replenishHand() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        const targetHandSize = 3;
+        
+        // Only replenish if player has hand cards (not playing face-up/face-down only)
+        if (currentPlayer.handCards.length === 0 && currentPlayer.faceUpCards.length > 0) {
+            // Player is now playing face-up cards, no hand replenishment
+            console.log(`${currentPlayer.name} is now playing face-up cards`);
+            return;
+        }
+        
+        if (currentPlayer.handCards.length === 0 && currentPlayer.faceUpCards.length === 0) {
+            // Player is now playing face-down cards, no hand replenishment
+            console.log(`${currentPlayer.name} is now playing face-down cards`);
+            return;
+        }
+        
+        // Replenish hand to target size
+        while (currentPlayer.handCards.length < targetHandSize && gameState.drawPile.length > 0) {
+            const drawnCard = gameState.drawPile.pop();
+            currentPlayer.addCard(drawnCard, 'hand');
+            console.log(`${currentPlayer.name} drew: ${drawnCard.toString()}`);
+        }
+        
+        if (currentPlayer.handCards.length < targetHandSize && gameState.drawPile.length === 0) {
+            console.log('Draw pile is empty - no more cards to draw');
+        }
+    },
+    
+    // Check turn progression and win conditions
+    checkTurnProgression() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        // Check if player has finished (no cards left)
+        if (currentPlayer.getCardCount() === 0) {
+            console.log(`${currentPlayer.name} has finished the game!`);
+            currentPlayer.hasFinished = true;
+            currentPlayer.isActive = false;
+            this.showGameFeedback(`${currentPlayer.name} finished!`, 'success');
+            
+            // Check if game is over
+            if (gameState.checkGameOver()) {
+                this.handleGameOver();
+                return;
+            }
+        }
+        
+        // Move to next player
+        this.passTurn();
+    },
+    
+    // Handle game over
+    handleGameOver() {
+        const remainingPlayers = gameState.players.filter(p => p.isActive);
+        const loser = remainingPlayers.length === 1 ? remainingPlayers[0] : null;
+        
+        console.log('Game Over!');
+        if (loser) {
+            console.log(`${loser.name} is the Shithead!`);
+            this.showGameFeedback(`Game Over! ${loser.name} is the Shithead!`, 'info');
+        } else {
+            this.showGameFeedback('Game Over!', 'info');
+        }
+        
+        // TODO: Implement proper game over screen
+        gameState.gamePhase = GAME_PHASES.GAME_OVER;
     },
     
     // Pick up the discard pile
@@ -1567,16 +1807,26 @@ const setupScreen = {
         
         console.log(`${currentPlayer.name} picks up ${discardPileSize} cards from discard pile`);
         
-        // TODO: Implement pile pickup logic
-        // For now, just show feedback
-        this.showGameFeedback(`Picked up ${discardPileSize} cards from discard pile`, 'info');
+        // Move all discard pile cards to player's hand
+        const pickedUpCards = [...gameState.discardPile];
+        pickedUpCards.forEach(card => {
+            currentPlayer.addCard(card, 'hand');
+        });
+        
+        // Clear discard pile
+        gameState.discardPile = [];
+        
+        console.log(`${currentPlayer.name} picked up ${pickedUpCards.length} cards`);
+        this.showGameFeedback(`Picked up ${pickedUpCards.length} cards from discard pile`, 'info');
         
         // Clear any selections
         this.clearAllSelections();
         
-        // TODO: Move all discard pile cards to player's hand
-        // TODO: Clear discard pile
-        // TODO: Move to next player
+        // Pass turn to next player
+        this.passTurn();
+        
+        // Update display
+        this.updateGameBoardDisplay();
     },
     
     // Pass turn to next player
