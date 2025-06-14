@@ -1863,7 +1863,7 @@ const setupScreen = {
         this.updateGameBoardDisplay();
     },
     
-    // Pass turn to next player
+    // Pass turn to next player with smooth transitions
     passTurn() {
         const currentPlayer = gameState.getCurrentPlayer();
         console.log(`${currentPlayer.name} passes their turn`);
@@ -1871,13 +1871,135 @@ const setupScreen = {
         // Clear any selections
         this.clearAllSelections();
         
+        // Hide current player's cards and show transition
+        this.hideCurrentPlayer();
+        
         // Move to next player
         gameState.nextPlayer();
+        
+        // Show transition screen
+        this.showTurnTransition();
+    },
+    
+    // Hide current player's hand cards
+    hideCurrentPlayer() {
+        const handContainer = document.getElementById('current-player-hand');
+        if (handContainer) {
+            handContainer.style.opacity = '0.3';
+            handContainer.style.pointerEvents = 'none';
+        }
+        
+        // Disable control buttons
+        this.setControlButtonsEnabled(false);
+        
+        console.log('Current player cards hidden');
+    },
+    
+    // Show next player transition screen
+    showTurnTransition() {
+        const nextPlayer = gameState.getCurrentPlayer();
+        
+        // Create transition overlay
+        const transitionOverlay = document.createElement('div');
+        transitionOverlay.id = 'turn-transition-overlay';
+        transitionOverlay.className = 'turn-transition-overlay';
+        transitionOverlay.innerHTML = `
+            <div class="turn-transition-content">
+                <h2>Turn Change</h2>
+                <p class="current-player-name">${nextPlayer.name}'s Turn</p>
+                <p class="transition-instruction">Click to continue</p>
+                <button id="continue-turn-btn" class="continue-turn-btn">Continue</button>
+            </div>
+        `;
+        
+        document.body.appendChild(transitionOverlay);
+        
+        // Add click handler to continue
+        const continueBtn = document.getElementById('continue-turn-btn');
+        continueBtn.addEventListener('click', () => {
+            this.showNextPlayer();
+        });
+        
+        // Also allow clicking anywhere on overlay to continue
+        transitionOverlay.addEventListener('click', (e) => {
+            if (e.target === transitionOverlay) {
+                this.showNextPlayer();
+            }
+        });
+        
+        console.log(`Showing transition to ${nextPlayer.name}`);
+    },
+    
+    // Show next player's cards and enable controls
+    showNextPlayer() {
+        // Remove transition overlay
+        const overlay = document.getElementById('turn-transition-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
         
         // Re-render board for new player
         this.renderGameBoard();
         
-        this.showGameFeedback(`Turn passed to ${gameState.getCurrentPlayer().name}`, 'info');
+        // Show current player's cards
+        const handContainer = document.getElementById('current-player-hand');
+        if (handContainer) {
+            handContainer.style.opacity = '1';
+            handContainer.style.pointerEvents = 'auto';
+        }
+        
+        // Enable control buttons
+        this.setControlButtonsEnabled(true);
+        
+        // Update UI state for new player
+        this.resetUIStateForNewPlayer();
+        
+        const currentPlayer = gameState.getCurrentPlayer();
+        this.showGameFeedback(`${currentPlayer.name}'s turn`, 'info');
+        
+        console.log(`${currentPlayer.name} can now play`);
+    },
+    
+    // Enable/disable control buttons
+    setControlButtonsEnabled(enabled) {
+        const buttons = [
+            'play-selected-btn',
+            'pick-up-pile-btn', 
+            'pass-turn-btn',
+            'clear-selection-btn'
+        ];
+        
+        buttons.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.disabled = !enabled;
+                if (enabled) {
+                    button.classList.remove('disabled');
+                } else {
+                    button.classList.add('disabled');
+                }
+            }
+        });
+    },
+    
+    // Reset UI state for new player
+    resetUIStateForNewPlayer() {
+        // Clear any existing selections
+        this.clearAllSelections();
+        
+        // Reset button states
+        this.updatePlayButtonState();
+        
+        // Update current player display
+        const currentPlayerNameEl = document.getElementById('current-player-name');
+        if (currentPlayerNameEl) {
+            currentPlayerNameEl.textContent = `${gameState.getCurrentPlayer().name}'s Turn`;
+        }
+        
+        // Re-attach event listeners for new player
+        this.attachCardSelectionListeners();
+        
+        console.log('UI state reset for new player');
     }
 };
 

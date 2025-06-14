@@ -516,3 +516,4 @@
 - [ ] All player counts (2-4) work correctly
 - [ ] All game rules are properly implemented
 - [ ] Game is ready for players to enjoy
+- [ ] Generate a stylish and comprehensive README.md file
