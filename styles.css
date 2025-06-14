@@ -175,4 +175,53 @@ p {
 .test-area h3 {
     color: var(--primary-color);
     margin-bottom: 15px;
+}
+
+/* Debug Area Styling */
+#game-state-debug {
+    text-align: left;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid #dee2e6;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#game-state-debug p {
+    margin: 5px 0;
+    text-align: left;
+}
+
+#game-state-debug hr {
+    margin: 10px 0;
+    border: none;
+    border-top: 1px solid #dee2e6;
+}
+
+#game-state-debug h4 {
+    color: var(--primary-color);
+    margin: 10px 0 5px 0;
+    font-size: 1rem;
+}
+
+/* Button Styling */
+.test-area button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.test-area button:hover {
+    background-color: #2980b9;
+}
+
+.test-area button:active {
+    transform: translateY(1px);
 } 
