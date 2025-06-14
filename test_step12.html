@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 12: Special Card Effects Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="setup-screen">
+            <h1>Threes (Shithead) - Step 12 Test</h1>
+            <p>Testing enhanced special card effects with visual feedback</p>
+            
+            <div class="setup-form">
+                <div class="form-group">
+                    <label for="player-count">Number of Players:</label>
+                    <select id="player-count">
+                        <option value="2">2 Players</option>
+                        <option value="3" selected>3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                </div>
+                
+                <div id="player-names-container">
+                    <!-- Player name inputs will be generated here -->
+                </div>
+                
+                <button id="start-game-btn" class="start-btn">Start Game</button>
+                <div id="setup-error" class="error-message"></div>
+            </div>
+        </div>
+        
+        <div id="game-area" style="display: none;">
+            <!-- Game board will be rendered here -->
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+    <script>
+        // Test Step 12 specific functionality
+        console.log('=== Step 12 Special Card Effects Test ===');
+        
+        // Test special effect detection
+        function testSpecialEffectDetection() {
+            console.log('Testing special effect detection...');
+            
+            if (typeof gameManager === 'undefined') {
+                console.log('❌ gameManager not available');
+                return;
+            }
+            
+            // Test 2s effect
+            const twosCard = { card: { rank: '2', suit: '♠' } };
+            const twosEffect = gameManager.handle2sEffect();
+            if (twosEffect.effect === 'wild' && twosEffect.message.includes('WILD')) {
+                console.log('✅ 2s wild effect detected correctly');
+            } else {
+                console.log('❌ 2s wild effect not working');
+            }
+            
+            // Test 10s effect
+            const tensEffect = gameManager.handle10Effect();
+            if (tensEffect.effect === 'pile_clear' && tensEffect.continueTurn === true) {
+                console.log('✅ 10s pile clear effect detected correctly');
+            } else {
+                console.log('❌ 10s pile clear effect not working');
+            }
+            
+            // Test four of a kind effect
+            const fourOfKindEffect = gameManager.handleFourOfAKindEffect();
+            if (fourOfKindEffect.effect === 'four_of_kind' && fourOfKindEffect.continueTurn === true) {
+                console.log('✅ Four of a kind effect detected correctly');
+            } else {
+                console.log('❌ Four of a kind effect not working');
+            }
+        }
+        
+        // Test visual effects
+        function testVisualEffects() {
+            console.log('Testing visual effects...');
+            
+            const pileArea = document.getElementById('discard-pile');
+            if (!pileArea) {
+                console.log('❌ Discard pile not found');
+                return;
+            }
+            
+            // Test pile clear effect
+            gameManager.triggerVisualEffect('pile-cleared');
+            setTimeout(() => {
+                if (pileArea.classList.contains('pile-cleared')) {
+                    console.log('✅ Pile clear visual effect triggered');
+                } else {
+                    console.log('❌ Pile clear visual effect not triggered');
+                }
+            }, 100);
+            
+            // Test wild card effect
+            setTimeout(() => {
+                gameManager.triggerVisualEffect('wild-card-played');
+                setTimeout(() => {
+                    if (pileArea.classList.contains('wild-played')) {
+                        console.log('✅ Wild card visual effect triggered');
+                    } else {
+                        console.log('❌ Wild card visual effect not triggered');
+                    }
+                }, 100);
+            }, 200);
+            
+            // Test four of a kind effect
+            setTimeout(() => {
+                gameManager.triggerVisualEffect('four-of-kind-cleared');
+                setTimeout(() => {
+                    if (pileArea.classList.contains('four-of-kind')) {
+                        console.log('✅ Four of a kind visual effect triggered');
+                    } else {
+                        console.log('❌ Four of a kind visual effect not triggered');
+                    }
+                }, 100);
+            }, 400);
+        }
+        
+        // Test pile clearing functionality
+        function testPileClearingFunctionality() {
+            console.log('Testing pile clearing functionality...');
+            
+            if (typeof gameState === 'undefined') {
+                console.log('❌ gameState not available');
+                return;
+            }
+            
+            // Add some test cards to discard pile
+            const testCards = [
+                { rank: '7', suit: '♠', id: 'test1' },
+                { rank: '8', suit: '♥', id: 'test2' },
+                { rank: '9', suit: '♣', id: 'test3' }
+            ];
+            
+            gameState.discardPile = [...testCards];
+            console.log(`Added ${testCards.length} test cards to discard pile`);
+            
+            // Test clearing
+            const clearedCount = gameManager.clearDiscardPile();
+            
+            if (gameState.discardPile.length === 0 && clearedCount === testCards.length) {
+                console.log('✅ Discard pile cleared successfully');
+            } else {
+                console.log('❌ Discard pile clearing failed');
+            }
+        }
+        
+        // Test special feedback messages
+        function testSpecialFeedback() {
+            console.log('Testing special feedback messages...');
+            
+            // Test special message type
+            gameManager.showGameFeedback('🔥 TEST SPECIAL EFFECT! 🔥', 'special');
+            
+            setTimeout(() => {
+                const feedback = document.querySelector('.game-feedback.special');
+                if (feedback) {
+                    console.log('✅ Special feedback message displayed');
+                } else {
+                    console.log('❌ Special feedback message not displayed');
+                }
+            }, 100);
+        }
+        
+        // Test four of a kind detection
+        function testFourOfAKindDetection() {
+            console.log('Testing four of a kind detection...');
+            
+            if (typeof gameState === 'undefined') {
+                console.log('❌ gameState not available');
+                return;
+            }
+            
+            // Test with less than 4 cards
+            gameState.discardPile = [
+                { rank: '7', suit: '♠' },
+                { rank: '7', suit: '♥' }
+            ];
+            
+            if (!gameManager.checkFourOfAKind()) {
+                console.log('✅ Correctly detected no four of a kind with 2 cards');
+            } else {
+                console.log('❌ Incorrectly detected four of a kind with 2 cards');
+            }
+            
+            // Test with four of a kind
+            gameState.discardPile = [
+                { rank: '6', suit: '♠' },
+                { rank: '7', suit: '♠' },
+                { rank: '7', suit: '♥' },
+                { rank: '7', suit: '♣' },
+                { rank: '7', suit: '♦' }
+            ];
+            
+            if (gameManager.checkFourOfAKind()) {
+                console.log('✅ Correctly detected four of a kind');
+            } else {
+                console.log('❌ Failed to detect four of a kind');
+            }
+            
+            // Test with different ranks
+            gameState.discardPile = [
+                { rank: '7', suit: '♠' },
+                { rank: '8', suit: '♥' },
+                { rank: '9', suit: '♣' },
+                { rank: '10', suit: '♦' }
+            ];
+            
+            if (!gameManager.checkFourOfAKind()) {
+                console.log('✅ Correctly detected no four of a kind with different ranks');
+            } else {
+                console.log('❌ Incorrectly detected four of a kind with different ranks');
+            }
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            console.log('Running all Step 12 tests...');
+            
+            setTimeout(() => {
+                testSpecialEffectDetection();
+                testFourOfAKindDetection();
+                testPileClearingFunctionality();
+                testSpecialFeedback();
+                
+                setTimeout(() => {
+                    testVisualEffects();
+                }, 500);
+                
+                console.log('All Step 12 tests completed!');
+            }, 1000);
+        }
+        
+        // Run tests after game initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for game to be set up
+            setTimeout(() => {
+                if (typeof gameState !== 'undefined' && typeof gameManager !== 'undefined') {
+                    runAllTests();
+                } else {
+                    console.log('Waiting for game initialization...');
+                    setTimeout(runAllTests, 2000);
+                }
+            }, 1500);
+        });
+        
+        console.log('Step 12 test script loaded');
+    </script>
+</body>
+</html> 

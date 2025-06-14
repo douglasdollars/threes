@@ -1528,18 +1528,21 @@ const setupScreen = {
         // Create new feedback message
         const feedbackDiv = document.createElement('div');
         feedbackDiv.className = `game-feedback ${type}`;
-        feedbackDiv.textContent = message;
+        feedbackDiv.innerHTML = message; // Use innerHTML to support emojis and formatting
         
         const controlsArea = document.querySelector('.game-controls');
         if (controlsArea) {
             controlsArea.insertBefore(feedbackDiv, controlsArea.firstChild);
             
-            // Auto-remove after 3 seconds
+            // Special effects get longer display time
+            const displayTime = type === 'special' ? 4000 : 3000;
+            
+            // Auto-remove after specified time
             setTimeout(() => {
                 if (feedbackDiv.parentNode) {
                     feedbackDiv.remove();
                 }
-            }, 3000);
+            }, displayTime);
         }
     },
     
@@ -1682,38 +1685,56 @@ const setupScreen = {
         this.updateGameBoardDisplay();
     },
     
-    // Check for special card effects
+    // Enhanced special card effects detection
     checkSpecialEffects(playedCards) {
         const firstCard = playedCards[0].card;
         
-        // 10s clear the pile
+        // 10s clear the pile - highest priority
         if (firstCard.rank === '10') {
-            return { 
-                effect: 'pile_clear', 
-                message: '10s clear the pile! Play again.',
-                continueTurn: true 
-            };
+            return this.handle10Effect();
         }
         
-        // Check for four of a kind on discard pile
+        // Check for four of a kind on discard pile - second priority
         if (this.checkFourOfAKind()) {
-            return { 
-                effect: 'four_of_kind', 
-                message: 'Four of a kind! Pile cleared! Play again.',
-                continueTurn: true 
-            };
+            return this.handleFourOfAKindEffect();
         }
         
-        // 2s are wild but don't have special effects in basic implementation
+        // 2s are wild cards - third priority
         if (firstCard.rank === '2') {
-            return { 
-                effect: 'wild', 
-                message: '2s are wild - next player can play any card',
-                continueTurn: false 
-            };
+            return this.handle2sEffect();
         }
         
         return { effect: null };
+    },
+    
+    // Handle 2s effect (wild cards)
+    handle2sEffect() {
+        return { 
+            effect: 'wild', 
+            message: '🃏 2s are WILD! Next player can play any card',
+            continueTurn: false,
+            visualEffect: 'wild-card-played'
+        };
+    },
+    
+    // Handle 10s effect (pile clear)
+    handle10Effect() {
+        return { 
+            effect: 'pile_clear', 
+            message: '💥 10s CLEAR the pile! Play again!',
+            continueTurn: true,
+            visualEffect: 'pile-cleared'
+        };
+    },
+    
+    // Handle four of a kind effect (pile clear)
+    handleFourOfAKindEffect() {
+        return { 
+            effect: 'four_of_kind', 
+            message: '🔥 FOUR OF A KIND! Pile cleared! Play again!',
+            continueTurn: true,
+            visualEffect: 'four-of-kind-cleared'
+        };
     },
     
     // Check if top 4 cards of discard pile are same rank
@@ -1726,25 +1747,93 @@ const setupScreen = {
         return topFour.every(card => card.rank === firstRank);
     },
     
-    // Handle special effects
+    // Enhanced special effects handler
     handleSpecialEffect(specialEffect) {
-        console.log('Special effect:', specialEffect.message);
-        this.showGameFeedback(specialEffect.message, 'info');
+        console.log('Special effect triggered:', specialEffect.effect);
         
+        // Show enhanced visual feedback
+        this.showSpecialEffectFeedback(specialEffect);
+        
+        // Handle pile clearing effects
         if (specialEffect.effect === 'pile_clear' || specialEffect.effect === 'four_of_kind') {
-            // Clear the discard pile
-            gameState.discardPile = [];
-            console.log('Discard pile cleared');
+            this.clearDiscardPile();
         }
         
+        // Handle turn continuation
         if (specialEffect.continueTurn) {
-            // Player gets another turn
-            console.log(`${gameState.getCurrentPlayer().name} gets another turn`);
+            // Player gets another turn - replenish hand but don't pass turn
+            console.log(`${gameState.getCurrentPlayer().name} gets another turn!`);
             this.replenishHand();
+            this.showGameFeedback(`${gameState.getCurrentPlayer().name} plays again!`, 'success');
         } else {
             // Normal turn progression
             this.replenishHand();
             this.checkTurnProgression();
+        }
+    },
+    
+    // Clear discard pile (remove from play, not to hand)
+    clearDiscardPile() {
+        const clearedCount = gameState.discardPile.length;
+        gameState.discardPile = [];
+        
+        console.log(`Discard pile cleared - ${clearedCount} cards removed from play`);
+        
+        // Update display immediately
+        this.updateGameBoardDisplay();
+        
+        // Show visual effect
+        this.showPileClearEffect();
+        
+        return clearedCount;
+    },
+    
+    // Show enhanced feedback for special effects
+    showSpecialEffectFeedback(specialEffect) {
+        // Show the main message
+        this.showGameFeedback(specialEffect.message, 'special');
+        
+        // Add visual effects based on effect type
+        if (specialEffect.visualEffect) {
+            this.triggerVisualEffect(specialEffect.visualEffect);
+        }
+    },
+    
+    // Trigger visual effects for special cards
+    triggerVisualEffect(effectType) {
+        const pileArea = document.getElementById('discard-pile');
+        if (!pileArea) return;
+        
+        // Remove any existing effect classes
+        pileArea.classList.remove('pile-cleared', 'wild-played', 'four-of-kind');
+        
+        // Add appropriate effect class
+        switch (effectType) {
+            case 'pile-cleared':
+                pileArea.classList.add('pile-cleared');
+                break;
+            case 'wild-card-played':
+                pileArea.classList.add('wild-played');
+                break;
+            case 'four-of-kind-cleared':
+                pileArea.classList.add('four-of-kind');
+                break;
+        }
+        
+        // Remove effect class after animation
+        setTimeout(() => {
+            pileArea.classList.remove('pile-cleared', 'wild-played', 'four-of-kind');
+        }, 1500);
+    },
+    
+    // Show pile clear visual effect
+    showPileClearEffect() {
+        const pileArea = document.getElementById('discard-pile');
+        if (pileArea) {
+            pileArea.classList.add('pile-clearing');
+            setTimeout(() => {
+                pileArea.classList.remove('pile-clearing');
+            }, 800);
         }
     },
     

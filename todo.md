@@ -357,30 +357,30 @@
 
 ### Special Card Detection
 
-- [ ] Create `checkForSpecialEffects()` function
-- [ ] Detect when 2s are played (wild cards)
-- [ ] Detect when 10s are played (pile clear)
-- [ ] Detect four-of-a-kind completion on discard pile
+- [x] Create `checkForSpecialEffects()` function
+- [x] Detect when 2s are played (wild cards)
+- [x] Detect when 10s are played (pile clear)
+- [x] Detect four-of-a-kind completion on discard pile
 
 ### Special Effect Handlers
 
-- [ ] Implement `handle2sEffect()` - allow any card to be played next
-- [ ] Implement `handle10Effect()` - clear pile, same player continues
-- [ ] Implement `handleFourOfAKindEffect()` - clear pile, same player continues
+- [x] Implement `handle2sEffect()` - allow any card to be played next
+- [x] Implement `handle10Effect()` - clear pile, same player continues
+- [x] Implement `handleFourOfAKindEffect()` - clear pile, same player continues
 
 ### Pile Clearing Mechanics
 
-- [ ] Create `clearDiscardPile()` function
-- [ ] Remove pile from play (not to hand)
-- [ ] Give same player another turn after pile clear
-- [ ] Handle multiple consecutive special effects
+- [x] Create `clearDiscardPile()` function
+- [x] Remove pile from play (not to hand)
+- [x] Give same player another turn after pile clear
+- [x] Handle multiple consecutive special effects
 
 ### UI Feedback
 
-- [ ] Add brief messages for special actions ("Pile cleared!")
-- [ ] Create visual indicators for wild cards (2s)
-- [ ] Implement smooth transitions for continued turns
-- [ ] Test each special case thoroughly
+- [x] Add brief messages for special actions ("Pile cleared!")
+- [x] Create visual indicators for wild cards (2s)
+- [x] Implement smooth transitions for continued turns
+- [x] Test each special case thoroughly
 
 ## ✅ Step 13: End Game Logic
 

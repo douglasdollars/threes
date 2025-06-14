@@ -855,6 +855,138 @@ p {
     }
 }
 
+/* Special Card Effect Animations */
+.game-feedback.special {
+    background: linear-gradient(135deg, #ff6b6b, #feca57);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    animation: specialPulse 0.6s ease-in-out;
+}
+
+@keyframes specialPulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Pile Clear Effects */
+#discard-pile.pile-cleared {
+    animation: pileCleared 1.2s ease-in-out;
+}
+
+@keyframes pileCleared {
+    0% {
+        transform: scale(1);
+    }
+    25% {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px #ff6b6b;
+    }
+    50% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+    75% {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px #feca57;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Wild Card Effects */
+#discard-pile.wild-played {
+    animation: wildCardEffect 1s ease-in-out;
+}
+
+@keyframes wildCardEffect {
+    0% {
+        transform: rotate(0deg);
+        box-shadow: 0 0 10px #4ecdc4;
+    }
+    25% {
+        transform: rotate(5deg);
+        box-shadow: 0 0 20px #45b7aa;
+    }
+    50% {
+        transform: rotate(-5deg);
+        box-shadow: 0 0 25px #4ecdc4;
+    }
+    75% {
+        transform: rotate(3deg);
+        box-shadow: 0 0 15px #45b7aa;
+    }
+    100% {
+        transform: rotate(0deg);
+        box-shadow: 0 0 5px #4ecdc4;
+    }
+}
+
+/* Four of a Kind Effects */
+#discard-pile.four-of-kind {
+    animation: fourOfKindEffect 1.5s ease-in-out;
+}
+
+@keyframes fourOfKindEffect {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px #ff9ff3;
+    }
+    20% {
+        transform: scale(1.15);
+        box-shadow: 0 0 25px #f368e0;
+    }
+    40% {
+        transform: scale(0.9);
+        box-shadow: 0 0 35px #ff9ff3;
+    }
+    60% {
+        transform: scale(1.1);
+        box-shadow: 0 0 30px #f368e0;
+    }
+    80% {
+        transform: scale(0.95);
+        box-shadow: 0 0 20px #ff9ff3;
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px #f368e0;
+    }
+}
+
+/* Pile Clearing Animation */
+#discard-pile.pile-clearing {
+    animation: pileClearing 0.8s ease-in-out;
+}
+
+@keyframes pileClearing {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 /* Discard pile should show layered cards */
 .card-pile .card {
     position: absolute;
