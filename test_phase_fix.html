@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase Transition Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #console-output {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Phase Transition Fix Test</h1>
+        <p>This page tests the fix for the phase transition issue in the exchange system.</p>
+        
+        <div>
+            <button onclick="runPhaseTest()">🧪 Test Phase Transition</button>
+            <button onclick="runOriginalTest()">📋 Run Original Test</button>
+            <button onclick="clearConsole()">🧹 Clear Console</button>
+            <button onclick="openMainGame()">🎮 Open Main Game</button>
+        </div>
+        
+        <div id="test-status"></div>
+        
+        <div id="console-output">Console output will appear here...</div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="verify_phase.js"></script>
+    <script>
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function logToPage(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
+            consoleOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToPage(args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToPage(args.join(' '), 'error');
+        };
+        
+        function clearConsole() {
+            consoleOutput.textContent = '';
+            document.getElementById('test-status').innerHTML = '';
+        }
+        
+        function openMainGame() {
+            window.open('index.html', '_blank');
+        }
+        
+        function runPhaseTest() {
+            clearConsole();
+            console.log('🚀 Starting Phase Transition Fix Test...\n');
+            
+            try {
+                const result = verifyPhase.run();
+                
+                const statusDiv = document.getElementById('test-status');
+                if (result) {
+                    statusDiv.innerHTML = '<div class="status pass">✅ Phase Transition Test PASSED!</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="status fail">❌ Phase Transition Test FAILED!</div>';
+                }
+                
+            } catch (error) {
+                console.error('Test failed with error:', error);
+                document.getElementById('test-status').innerHTML = '<div class="status fail">❌ Test Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function runOriginalTest() {
+            clearConsole();
+            console.log('🧪 Running Original Integration Test (Fixed Version)...\n');
+            
+            try {
+                // This is the same test that was failing before
+                const testGameState = new GameState();
+                testGameState.initializeGame(['Alice', 'Bob', 'Charlie']);
+                
+                // Create and shuffle deck
+                testGameState.deck = createDeck();
+                testGameState.drawPile = shuffleDeck(testGameState.deck);
+                
+                // Use the CORRECT function (initializeDecks, not dealInitialCards)
+                const dealSuccess = initializeDecks(testGameState);
+                
+                if (dealSuccess) {
+                    console.log('✅ Cards dealt successfully to all players');
+                    
+                    // Check if exchange phase is set
+                    if (testGameState.gamePhase === 'exchange') {
+                        console.log('✅ Game correctly transitions to EXCHANGE phase');
+                        document.getElementById('test-status').innerHTML = '<div class="status pass">✅ Original Test Now PASSES!</div>';
+                    } else {
+                        console.log(`❌ Phase transition failed - current phase: ${testGameState.gamePhase}`);
+                        document.getElementById('test-status').innerHTML = '<div class="status fail">❌ Original Test Still Fails</div>';
+                    }
+                    
+                    // Test player card counts
+                    let allPlayersHaveCorrectCards = true;
+                    testGameState.players.forEach(player => {
+                        if (player.getCardCount() !== 9) {
+                            allPlayersHaveCorrectCards = false;
+                        }
+                    });
+                    
+                    if (allPlayersHaveCorrectCards) {
+                        console.log('✅ All players have correct number of cards (9 each)');
+                    } else {
+                        console.log('❌ Incorrect card distribution');
+                    }
+                    
+                } else {
+                    console.log('❌ Card dealing failed');
+                    document.getElementById('test-status').innerHTML = '<div class="status fail">❌ Card Dealing Failed</div>';
+                }
+                
+            } catch (error) {
+                console.error('Original test failed with error:', error);
+                document.getElementById('test-status').innerHTML = '<div class="status fail">❌ Test Error: ' + error.message + '</div>';
+            }
+        }
+        
+        // Initialize
+        console.log('🔧 Phase Transition Fix Test Page Loaded');
+        console.log('Click "Test Phase Transition" to verify the fix works correctly.');
+    </script>
+</body>
+</html> 
