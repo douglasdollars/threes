@@ -31,32 +31,32 @@
 
 ### Card Class Enhancement
 
-- [ ] Add `rank`, `suit`, and `id` properties to Card class
-- [ ] Implement `getValue()` method for card comparison (2=14, A=13, K=12, etc.)
-- [ ] Implement `toString()` method for display
-- [ ] Test card comparison logic
+- [x] Add `rank`, `suit`, and `id` properties to Card class
+- [x] Implement `getValue()` method for card comparison (2=14, A=13, K=12, etc.)
+- [x] Implement `toString()` method for display
+- [x] Test card comparison logic
 
 ### Card Styling
 
-- [ ] Create `.card` CSS class with proper dimensions (standard card ratio)
-- [ ] Style face-up cards with rank and suit display
-- [ ] Style face-down cards with generic back design
-- [ ] Add hover effects for interactive cards
-- [ ] Add selection state styling
-- [ ] Implement red/black color coding for suits
+- [x] Create `.card` CSS class with proper dimensions (standard card ratio)
+- [x] Style face-up cards with rank and suit display
+- [x] Style face-down cards with generic back design
+- [x] Add hover effects for interactive cards
+- [x] Add selection state styling
+- [x] Implement red/black color coding for suits
 
 ### Utility Functions
 
-- [ ] Create `createDeck()` function - generates full 52-card deck
-- [ ] Create `shuffleDeck()` function - Fisher-Yates shuffle implementation
-- [ ] Create `renderCard()` function - creates DOM element for a card
-- [ ] Test deck creation and shuffling
+- [x] Create `createDeck()` function - generates full 52-card deck
+- [x] Create `shuffleDeck()` function - Fisher-Yates shuffle implementation
+- [x] Create `renderCard()` function - creates DOM element for a card
+- [x] Test deck creation and shuffling
 
 ### Testing
 
-- [ ] Add simple test in HTML to display sample cards
-- [ ] Verify card styling works correctly
-- [ ] Test card rendering function
+- [x] Add simple test in HTML to display sample cards
+- [x] Verify card styling works correctly
+- [x] Test card rendering function
 
 ## ✅ Step 3: Game State Management
 
