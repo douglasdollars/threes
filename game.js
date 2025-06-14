@@ -654,11 +654,26 @@ const setupScreen = {
                     </div>
                 </div>
                 
+                <!-- Selection Rules -->
+                <div class="selection-rules">
+                    <h4>Card Selection Rules:</h4>
+                    <ul>
+                        <li>Select cards of the <strong>same rank</strong> to play together</li>
+                        <li>Must play from <strong>hand cards first</strong> if available</li>
+                        <li>Can play <strong>face-up cards</strong> when hand is empty</li>
+                        <li>Face-down cards are only playable when no other cards remain</li>
+                    </ul>
+                </div>
+                
                 <!-- Control Buttons -->
-                <div class="control-buttons">
-                    <button id="play-selected-btn" class="control-btn" disabled>Play Selected Cards</button>
-                    <button id="pick-up-pile-btn" class="control-btn">Pick Up Pile</button>
-                    <button id="pass-turn-btn" class="control-btn">Pass to Next Player</button>
+                <div class="game-controls">
+                    <div id="selection-info" class="selection-info">No cards selected</div>
+                    <div class="control-buttons">
+                        <button id="play-selected-btn" class="control-btn primary" disabled>Play Selected Cards</button>
+                        <button id="pick-up-pile-btn" class="control-btn secondary">Pick Up Pile</button>
+                        <button id="pass-turn-btn" class="control-btn secondary">Pass to Next Player</button>
+                        <button id="clear-selection-btn" class="control-btn tertiary">Clear Selection</button>
+                    </div>
                 </div>
                 
                 <!-- Debug Area (temporary) -->
@@ -1102,30 +1117,36 @@ const setupScreen = {
     
     // Attach game area event listeners
     attachGameEventListeners() {
+        // Initialize selection system
+        this.initializeSelectedCards();
+        
         // Control buttons
         const playSelectedBtn = document.getElementById('play-selected-btn');
         const pickupPileBtn = document.getElementById('pick-up-pile-btn');
         const passTurnBtn = document.getElementById('pass-turn-btn');
+        const clearSelectionBtn = document.getElementById('clear-selection-btn');
         
         if (playSelectedBtn) {
             playSelectedBtn.addEventListener('click', () => {
-                console.log('Play Selected Cards clicked');
-                // TODO: Implement card playing logic
+                this.playSelectedCards();
             });
         }
         
         if (pickupPileBtn) {
             pickupPileBtn.addEventListener('click', () => {
-                console.log('Pick Up Pile clicked');
-                // TODO: Implement pile pickup logic
+                this.pickUpPile();
             });
         }
         
         if (passTurnBtn) {
             passTurnBtn.addEventListener('click', () => {
-                console.log('Pass Turn clicked');
-                gameState.nextPlayer();
-                this.renderGameBoard(); // Re-render entire board for new player
+                this.passTurn();
+            });
+        }
+        
+        if (clearSelectionBtn) {
+            clearSelectionBtn.addEventListener('click', () => {
+                this.clearAllSelections();
             });
         }
         
@@ -1297,14 +1318,199 @@ const setupScreen = {
     
     // Attach card selection event listeners
     attachCardSelectionListeners() {
-        // Add click handlers to current player's hand and face-up cards
-        document.addEventListener('click', (e) => {
+        // Remove any existing card selection listeners to prevent duplicates
+        if (this.cardSelectionHandler) {
+            document.removeEventListener('click', this.cardSelectionHandler);
+        }
+        
+        // Card selection handler for playing phase
+        this.cardSelectionHandler = (e) => {
             const card = e.target.closest('.card.face-up');
             if (card && this.isCurrentPlayerCard(card)) {
-                card.classList.toggle('selected');
-                this.updatePlayButtonState();
+                this.handleCardSelection(card);
             }
+        };
+        
+        document.addEventListener('click', this.cardSelectionHandler);
+    },
+    
+    // Handle card selection logic
+    handleCardSelection(cardElement) {
+        const cardId = cardElement.dataset.cardId;
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        // Check if card is selectable
+        if (!this.isCardSelectable(cardElement)) {
+            this.showGameFeedback('This card cannot be selected right now', 'error');
+            return;
+        }
+        
+        // Toggle selection
+        const isSelected = cardElement.classList.contains('selected');
+        
+        if (isSelected) {
+            // Deselect card
+            cardElement.classList.remove('selected');
+            this.removeFromSelectedCards(cardId);
+            console.log(`Deselected card: ${cardId}`);
+        } else {
+            // Check selection rules before selecting
+            if (this.canSelectCard(cardElement)) {
+                cardElement.classList.add('selected');
+                this.addToSelectedCards(cardId, cardElement);
+                console.log(`Selected card: ${cardId}`);
+            } else {
+                this.showGameFeedback('Cannot select this card with current selection', 'error');
+                return;
+            }
+        }
+        
+        this.updatePlayButtonState();
+        this.updateSelectionDisplay();
+    },
+    
+    // Check if a card can be selected based on game rules
+    isCardSelectable(cardElement) {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        // Must be current player's card
+        if (!this.isCurrentPlayerCard(cardElement)) {
+            return false;
+        }
+        
+        // Must be face-up (hand cards or face-up cards)
+        if (cardElement.classList.contains('face-down')) {
+            return false;
+        }
+        
+        // If player has hand cards, they must play from hand first
+        if (currentPlayer.handCards.length > 0) {
+            const cardArea = cardElement.closest('.current-player-hand, .current-player-face-up');
+            return cardArea && cardArea.classList.contains('current-player-hand');
+        }
+        
+        // If no hand cards, can play face-up cards
+        return true;
+    },
+    
+    // Check if card can be selected with current selection (same rank rule)
+    canSelectCard(cardElement) {
+        const selectedCards = this.getSelectedCards();
+        
+        // First card can always be selected
+        if (selectedCards.length === 0) {
+            return true;
+        }
+        
+        // Get card rank
+        const cardId = cardElement.dataset.cardId;
+        const card = this.findCardById(cardId);
+        if (!card) return false;
+        
+        // All selected cards must have same rank
+        const firstSelectedCard = selectedCards[0].card;
+        return card.rank === firstSelectedCard.rank;
+    },
+    
+    // Initialize selected cards tracking
+    initializeSelectedCards() {
+        this.selectedCards = [];
+    },
+    
+    // Add card to selected cards list
+    addToSelectedCards(cardId, cardElement) {
+        const card = this.findCardById(cardId);
+        if (card) {
+            this.selectedCards.push({
+                id: cardId,
+                card: card,
+                element: cardElement
+            });
+        }
+    },
+    
+    // Remove card from selected cards list
+    removeFromSelectedCards(cardId) {
+        this.selectedCards = this.selectedCards.filter(item => item.id !== cardId);
+    },
+    
+    // Get currently selected cards
+    getSelectedCards() {
+        return this.selectedCards || [];
+    },
+    
+    // Find card by ID in current player's collection
+    findCardById(cardId) {
+        const currentPlayer = gameState.getCurrentPlayer();
+        if (!currentPlayer) return null;
+        
+        // Search in all card collections
+        let foundCard = currentPlayer.handCards.find(card => card.id === cardId);
+        if (foundCard) return foundCard;
+        
+        foundCard = currentPlayer.faceUpCards.find(card => card.id === cardId);
+        if (foundCard) return foundCard;
+        
+        foundCard = currentPlayer.faceDownCards.find(card => card.id === cardId);
+        return foundCard;
+    },
+    
+    // Update selection display
+    updateSelectionDisplay() {
+        const selectedCards = this.getSelectedCards();
+        const selectionInfo = document.getElementById('selection-info');
+        
+        if (selectionInfo) {
+            if (selectedCards.length === 0) {
+                selectionInfo.textContent = 'No cards selected';
+                selectionInfo.className = 'selection-info';
+            } else {
+                const cardNames = selectedCards.map(item => item.card.toString()).join(', ');
+                selectionInfo.textContent = `Selected: ${cardNames} (${selectedCards.length} card${selectedCards.length > 1 ? 's' : ''})`;
+                selectionInfo.className = 'selection-info active';
+            }
+        }
+    },
+    
+    // Clear all selections
+    clearAllSelections() {
+        // Remove visual selection from all cards
+        document.querySelectorAll('.card.selected').forEach(card => {
+            card.classList.remove('selected');
         });
+        
+        // Clear selection tracking
+        this.selectedCards = [];
+        this.updatePlayButtonState();
+        this.updateSelectionDisplay();
+        
+        console.log('All card selections cleared');
+    },
+    
+    // Show game feedback message
+    showGameFeedback(message, type = 'info') {
+        // Remove existing feedback
+        const existingFeedback = document.querySelector('.game-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+        
+        // Create new feedback message
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = `game-feedback ${type}`;
+        feedbackDiv.textContent = message;
+        
+        const controlsArea = document.querySelector('.game-controls');
+        if (controlsArea) {
+            controlsArea.insertBefore(feedbackDiv, controlsArea.firstChild);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (feedbackDiv.parentNode) {
+                    feedbackDiv.remove();
+                }
+            }, 3000);
+        }
     },
     
     // Check if a card belongs to the current player
@@ -1315,12 +1521,79 @@ const setupScreen = {
     
     // Update play button state based on selected cards
     updatePlayButtonState() {
-        const selectedCards = document.querySelectorAll('.current-player-area .card.selected');
+        const selectedCards = this.getSelectedCards();
         const playBtn = document.getElementById('play-selected-btn');
         
         if (playBtn) {
             playBtn.disabled = selectedCards.length === 0;
         }
+    },
+    
+    // Play selected cards
+    playSelectedCards() {
+        const selectedCards = this.getSelectedCards();
+        
+        if (selectedCards.length === 0) {
+            this.showGameFeedback('No cards selected to play', 'error');
+            return;
+        }
+        
+        console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
+        
+        // TODO: Implement card playing validation and logic
+        // For now, just show feedback
+        const cardNames = selectedCards.map(item => item.card.toString()).join(', ');
+        this.showGameFeedback(`Played cards: ${cardNames}`, 'success');
+        
+        // Clear selection after playing
+        this.clearAllSelections();
+        
+        // TODO: Remove cards from player's hand/face-up cards
+        // TODO: Add cards to discard pile
+        // TODO: Check if player needs to draw cards
+        // TODO: Check win conditions
+        // TODO: Move to next player
+    },
+    
+    // Pick up the discard pile
+    pickUpPile() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        const discardPileSize = gameState.discardPile.length;
+        
+        if (discardPileSize === 0) {
+            this.showGameFeedback('No cards in discard pile to pick up', 'error');
+            return;
+        }
+        
+        console.log(`${currentPlayer.name} picks up ${discardPileSize} cards from discard pile`);
+        
+        // TODO: Implement pile pickup logic
+        // For now, just show feedback
+        this.showGameFeedback(`Picked up ${discardPileSize} cards from discard pile`, 'info');
+        
+        // Clear any selections
+        this.clearAllSelections();
+        
+        // TODO: Move all discard pile cards to player's hand
+        // TODO: Clear discard pile
+        // TODO: Move to next player
+    },
+    
+    // Pass turn to next player
+    passTurn() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        console.log(`${currentPlayer.name} passes their turn`);
+        
+        // Clear any selections
+        this.clearAllSelections();
+        
+        // Move to next player
+        gameState.nextPlayer();
+        
+        // Re-render board for new player
+        this.renderGameBoard();
+        
+        this.showGameFeedback(`Turn passed to ${gameState.getCurrentPlayer().name}`, 'info');
     }
 };
 
