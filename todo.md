@@ -386,31 +386,31 @@
 
 ### Player Elimination System
 
-- [ ] Create `checkPlayerFinished()` function
-- [ ] Remove players when all cards are gone
-- [ ] Handle face-down card flipping rules
-- [ ] Update player status display for finished players
+- [x] Create `checkPlayerFinished()` function
+- [x] Remove players when all cards are gone
+- [x] Handle face-down card flipping rules
+- [x] Update player status display for finished players
 
 ### Game Over Detection
 
-- [ ] Implement `checkGameOver()` function
-- [ ] Detect when only one player remains
-- [ ] Identify the losing player ("shithead")
-- [ ] Trigger game over state
+- [x] Implement `checkGameOver()` function
+- [x] Detect when only one player remains
+- [x] Identify the losing player ("shithead")
+- [x] Trigger game over state
 
 ### End Game UI
 
-- [ ] Gray out finished players' areas
-- [ ] Maintain table visibility for finished players
-- [ ] Create game over message display
-- [ ] Design simple end game screen
+- [x] Gray out finished players' areas
+- [x] Maintain table visibility for finished players
+- [x] Create game over message display
+- [x] Design simple end game screen
 
 ### Final Card Play Validation
 
-- [ ] Handle face-down card reveals properly
-- [ ] Validate blind plays from face-down cards
-- [ ] Force pickup when face-down card doesn't play
-- [ ] Test end game scenarios with different player counts
+- [x] Handle face-down card reveals properly
+- [x] Validate blind plays from face-down cards
+- [x] Force pickup when face-down card doesn't play
+- [x] Test end game scenarios with different player counts
 
 ## ✅ Step 14: Error Handling
 

@@ -1645,10 +1645,19 @@ const setupScreen = {
         return { valid: false, message: `Cannot play ${playCard.rank} on ${topCard.rank}` };
     },
     
-    // Execute the card play
+    // Execute the card play with face-down card handling
     executeCardPlay(selectedCards) {
         const currentPlayer = gameState.getCurrentPlayer();
         const cardNames = selectedCards.map(item => item.card.toString()).join(', ');
+        
+        // Check if this is a face-down card play (blind play)
+        const isFaceDownPlay = selectedCards.some(item => 
+            currentPlayer.faceDownCards.find(c => c.id === item.id)
+        );
+        
+        if (isFaceDownPlay) {
+            return this.handleFaceDownCardPlay(selectedCards);
+        }
         
         // Remove cards from player's collection
         selectedCards.forEach(item => {
@@ -1679,6 +1688,55 @@ const setupScreen = {
             // Normal play - replenish hand and check turn progression
             this.replenishHand();
             this.checkTurnProgression();
+        }
+        
+        // Update display
+        this.updateGameBoardDisplay();
+    },
+    
+    // Handle face-down card plays (blind plays)
+    handleFaceDownCardPlay(selectedCards) {
+        const currentPlayer = gameState.getCurrentPlayer();
+        const playedCard = selectedCards[0].card;
+        
+        console.log(`${currentPlayer.name} plays face-down card: ${playedCard.toString()}`);
+        this.showGameFeedback(`${currentPlayer.name} plays face-down: ${playedCard.toString()}`, 'info');
+        
+        // Remove the face-down card from player
+        currentPlayer.removeCard(selectedCards[0].id, 'faceDown');
+        
+        // Validate if the blind play is legal
+        const topDiscardCard = gameState.discardPile.length > 0 ? 
+            gameState.discardPile[gameState.discardPile.length - 1] : null;
+        
+        let validPlay = true;
+        if (topDiscardCard) {
+            const validationResult = this.canPlayOnCard(playedCard, topDiscardCard);
+            validPlay = validationResult.valid;
+        }
+        
+        if (validPlay) {
+            // Successful blind play
+            gameState.discardPile.push(playedCard);
+            this.showGameFeedback(`🎯 Lucky! ${playedCard.toString()} plays successfully!`, 'success');
+            
+            // Check for special effects
+            const specialEffect = this.checkSpecialEffects(selectedCards);
+            if (specialEffect.effect) {
+                this.handleSpecialEffect(specialEffect);
+            } else {
+                this.replenishHand();
+                this.checkTurnProgression();
+            }
+        } else {
+            // Failed blind play - player must pick up pile plus the failed card
+            this.showGameFeedback(`💥 ${playedCard.toString()} doesn't play! Pick up the pile!`, 'error');
+            
+            // Add the failed card to discard pile first
+            gameState.discardPile.push(playedCard);
+            
+            // Force player to pick up the entire pile
+            this.pickUpPile();
         }
         
         // Update display
@@ -1867,16 +1925,13 @@ const setupScreen = {
         }
     },
     
-    // Check turn progression and win conditions
+    // Enhanced turn progression with detailed player finishing logic
     checkTurnProgression() {
         const currentPlayer = gameState.getCurrentPlayer();
         
-        // Check if player has finished (no cards left)
-        if (currentPlayer.getCardCount() === 0) {
-            console.log(`${currentPlayer.name} has finished the game!`);
-            currentPlayer.hasFinished = true;
-            currentPlayer.isActive = false;
-            this.showGameFeedback(`${currentPlayer.name} finished!`, 'success');
+        // Check if player has finished using enhanced logic
+        if (this.checkPlayerFinished(currentPlayer)) {
+            this.handlePlayerFinished(currentPlayer);
             
             // Check if game is over
             if (gameState.checkGameOver()) {
@@ -1889,21 +1944,161 @@ const setupScreen = {
         this.passTurn();
     },
     
-    // Handle game over
-    handleGameOver() {
-        const remainingPlayers = gameState.players.filter(p => p.isActive);
-        const loser = remainingPlayers.length === 1 ? remainingPlayers[0] : null;
+    // Enhanced player finishing check with face-down card rules
+    checkPlayerFinished(player) {
+        const totalCards = player.getCardCount();
         
-        console.log('Game Over!');
-        if (loser) {
-            console.log(`${loser.name} is the Shithead!`);
-            this.showGameFeedback(`Game Over! ${loser.name} is the Shithead!`, 'info');
-        } else {
-            this.showGameFeedback('Game Over!', 'info');
+        if (totalCards === 0) {
+            console.log(`${player.name} has no cards left - finished!`);
+            return true;
         }
         
-        // TODO: Implement proper game over screen
+        // Special case: If player only has face-down cards and just played their last face-up card
+        if (player.handCards.length === 0 && player.faceUpCards.length === 0 && player.faceDownCards.length > 0) {
+            console.log(`${player.name} is now playing face-down cards (blind)`);
+            // Player continues with face-down cards - not finished yet
+            return false;
+        }
+        
+        return false;
+    },
+    
+    // Handle when a player finishes the game
+    handlePlayerFinished(player) {
+        console.log(`🎉 ${player.name} has finished the game!`);
+        
+        player.hasFinished = true;
+        player.isActive = false;
+        
+        // Show celebration message
+        this.showGameFeedback(`🎉 ${player.name} finished! Well played!`, 'success');
+        
+        // Update player display to show finished status
+        this.updatePlayerFinishedStatus(player);
+        
+        // Log remaining active players
+        const activePlayers = gameState.players.filter(p => p.isActive);
+        console.log(`Remaining active players: ${activePlayers.map(p => p.name).join(', ')}`);
+    },
+    
+    // Update UI to show player finished status
+    updatePlayerFinishedStatus(player) {
+        // Find player's area in the DOM and gray it out
+        const playerAreas = document.querySelectorAll('.other-player');
+        playerAreas.forEach(area => {
+            const playerNameEl = area.querySelector('.player-name');
+            if (playerNameEl && playerNameEl.textContent === player.name) {
+                area.classList.add('player-finished');
+                
+                // Add finished indicator
+                if (!area.querySelector('.finished-indicator')) {
+                    const finishedIndicator = document.createElement('div');
+                    finishedIndicator.className = 'finished-indicator';
+                    finishedIndicator.innerHTML = '✅ FINISHED';
+                    area.appendChild(finishedIndicator);
+                }
+            }
+        });
+    },
+    
+    // Enhanced game over handling with proper end screen
+    handleGameOver() {
+        const remainingPlayers = gameState.players.filter(p => p.isActive);
+        const finishedPlayers = gameState.players.filter(p => p.hasFinished);
+        const loser = remainingPlayers.length === 1 ? remainingPlayers[0] : null;
+        
+        console.log('🏁 GAME OVER!');
         gameState.gamePhase = GAME_PHASES.GAME_OVER;
+        
+        // Disable all controls
+        this.setControlButtonsEnabled(false);
+        
+        // Create and show game over screen
+        this.showGameOverScreen(finishedPlayers, loser);
+        
+        // Log final results
+        console.log('=== FINAL RESULTS ===');
+        finishedPlayers.forEach((player, index) => {
+            console.log(`${index + 1}. ${player.name} - FINISHED`);
+        });
+        if (loser) {
+            console.log(`💩 ${loser.name} - THE SHITHEAD!`);
+        }
+        console.log('===================');
+    },
+    
+    // Create and display game over screen
+    showGameOverScreen(finishedPlayers, loser) {
+        // Create game over overlay
+        const gameOverOverlay = document.createElement('div');
+        gameOverOverlay.id = 'game-over-overlay';
+        gameOverOverlay.className = 'game-over-overlay';
+        
+        // Build results HTML
+        let resultsHTML = '<div class="game-over-results">';
+        
+        // Show finished players in order
+        if (finishedPlayers.length > 0) {
+            resultsHTML += '<h3>🏆 Finished Players</h3>';
+            finishedPlayers.forEach((player, index) => {
+                const position = index + 1;
+                const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : '🏅';
+                resultsHTML += `<div class="result-item finished">${medal} ${position}. ${player.name}</div>`;
+            });
+        }
+        
+        // Show the loser (Shithead)
+        if (loser) {
+            resultsHTML += '<h3>💩 The Shithead</h3>';
+            resultsHTML += `<div class="result-item loser">💩 ${loser.name}</div>`;
+        }
+        
+        resultsHTML += '</div>';
+        
+        gameOverOverlay.innerHTML = `
+            <div class="game-over-content">
+                <h1>🏁 GAME OVER!</h1>
+                ${resultsHTML}
+                <div class="game-over-actions">
+                    <button id="new-game-btn" class="new-game-btn">New Game</button>
+                    <button id="view-board-btn" class="view-board-btn">View Final Board</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(gameOverOverlay);
+        
+        // Add event listeners
+        const newGameBtn = document.getElementById('new-game-btn');
+        const viewBoardBtn = document.getElementById('view-board-btn');
+        
+        newGameBtn.addEventListener('click', () => {
+            this.startNewGame();
+        });
+        
+        viewBoardBtn.addEventListener('click', () => {
+            gameOverOverlay.remove();
+        });
+        
+        console.log('Game over screen displayed');
+    },
+    
+    // Start a new game
+    startNewGame() {
+        // Remove game over overlay
+        const overlay = document.getElementById('game-over-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Reset to setup screen
+        document.getElementById('game-area').style.display = 'none';
+        document.getElementById('setup-screen').style.display = 'block';
+        
+        // Reset game state
+        gameState = new GameState();
+        
+        console.log('Starting new game...');
     },
     
     // Pick up the discard pile
