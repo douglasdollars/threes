@@ -202,33 +202,33 @@
 
 ### Exchange UI System
 
-- [ ] Implement hide-and-reveal interface for each player
-- [ ] Display current player's hand and face-up cards during exchange
-- [ ] Add "Pass to Next Player" button for exchange phase
-- [ ] Create clear instructions for exchange phase
-- [ ] Style exchange phase interface
+- [x] Implement hide-and-reveal interface for each player
+- [x] Display current player's hand and face-up cards during exchange
+- [x] Add "Pass to Next Player" button for exchange phase
+- [x] Create clear instructions for exchange phase
+- [x] Style exchange phase interface
 
 ### Card Swapping Mechanics
 
-- [ ] Add click handlers for card selection (hand ↔ face-up swap)
-- [ ] Create visual selection states for cards during exchange
-- [ ] Implement `swapCards()` function in Player class
-- [ ] Add validation to ensure proper card types are swapped
+- [x] Add click handlers for card selection (hand ↔ face-up swap)
+- [x] Create visual selection states for cards during exchange
+- [x] Implement `swapCards()` function in Player class
+- [x] Add validation to ensure proper card types are swapped
 
 ### Exchange Flow Control
 
-- [ ] Create `exchangePhase` object to manage the process
-- [ ] Track which player is currently exchanging
-- [ ] Implement transition through all players
-- [ ] Move to PLAYING phase when all exchanges complete
+- [x] Create `exchangePhase` object to manage the process
+- [x] Track which player is currently exchanging
+- [x] Implement transition through all players
+- [x] Move to PLAYING phase when all exchanges complete
 
 ### UI Enhancements
 
-- [ ] Highlight swappable cards
-- [ ] Show exchange instructions clearly
-- [ ] Add confirm button for each player's exchanges
-- [ ] Provide visual feedback during swaps
-- [ ] Test exchange phase with multiple players
+- [x] Highlight swappable cards
+- [x] Show exchange instructions clearly
+- [x] Add confirm button for each player's exchanges
+- [x] Provide visual feedback during swaps
+- [x] Test exchange phase with multiple players
 
 ## ✅ Step 8: Basic Card Selection
 

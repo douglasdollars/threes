@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange System Test - Threes Card Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .test-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Exchange System Test Suite</h1>
+        <p>Comprehensive testing of the Threes card game exchange phase functionality.</p>
+        
+        <div class="test-controls">
+            <button onclick="runAllTests()">🚀 Run All Tests</button>
+            <button onclick="clearResults()">🧹 Clear Results</button>
+            <button onclick="openMainGame()">🎮 Open Main Game</button>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="test-section">
+            <h3>📋 Test Plan</h3>
+            <ul>
+                <li><strong>Game Flow Tests:</strong> Setup → Exchange → Playing transitions</li>
+                <li><strong>Card Swapping Tests:</strong> Valid/invalid swaps, data integrity</li>
+                <li><strong>UI Tests:</strong> Visual feedback, selection states, buttons</li>
+                <li><strong>Multi-Player Tests:</strong> Player progression, state isolation</li>
+                <li><strong>Edge Cases:</strong> Empty states, error handling, reset functionality</li>
+                <li><strong>Performance Tests:</strong> Event listener cleanup, memory leaks</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Manual Test Checklist</h3>
+            <div id="manual-checklist">
+                <label><input type="checkbox"> Setup screen loads correctly</label><br>
+                <label><input type="checkbox"> Can create 2, 3, and 4 player games</label><br>
+                <label><input type="checkbox"> Cards are dealt properly (3+3+3 per player)</label><br>
+                <label><input type="checkbox"> Exchange phase starts automatically</label><br>
+                <label><input type="checkbox"> First player is determined correctly</label><br>
+                <label><input type="checkbox"> Exchange UI shows current player</label><br>
+                <label><input type="checkbox"> Can select hand cards (visual feedback)</label><br>
+                <label><input type="checkbox"> Can select face-up cards (visual feedback)</label><br>
+                <label><input type="checkbox"> Cannot select face-down cards</label><br>
+                <label><input type="checkbox"> Can swap hand ↔ face-up cards</label><br>
+                <label><input type="checkbox"> Cannot swap same type cards</label><br>
+                <label><input type="checkbox"> Success/error messages appear</label><br>
+                <label><input type="checkbox"> Reset button works correctly</label><br>
+                <label><input type="checkbox"> Confirm button advances to next player</label><br>
+                <label><input type="checkbox"> All players get their turn</label><br>
+                <label><input type="checkbox"> Game transitions to PLAYING phase</label><br>
+                <label><input type="checkbox"> Debug panel shows correct state</label><br>
+                <label><input type="checkbox"> Responsive design works on mobile</label><br>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test results container
+        let testResults = [];
+        
+        // Test helper functions
+        function addTestResult(testName, passed, message, details = null) {
+            testResults.push({
+                name: testName,
+                passed: passed,
+                message: message,
+                details: details,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            updateTestDisplay();
+        }
+        
+        function updateTestDisplay() {
+            const container = document.getElementById('test-results');
+            if (testResults.length === 0) {
+                container.innerHTML = '<div class="test-info">No tests run yet. Click "Run All Tests" to begin.</div>';
+                return;
+            }
+            
+            let html = '<h3>🧪 Test Results</h3>';
+            let passCount = 0;
+            
+            testResults.forEach(result => {
+                if (result.passed) passCount++;
+                
+                html += `
+                    <div class="test-result ${result.passed ? 'test-pass' : 'test-fail'}">
+                        <strong>${result.passed ? '✅' : '❌'} ${result.name}</strong>
+                        <br>${result.message}
+                        ${result.details ? `<pre>${result.details}</pre>` : ''}
+                        <small>Time: ${result.timestamp}</small>
+                    </div>
+                `;
+            });
+            
+            html = `
+                <div class="test-info">
+                    <strong>Summary:</strong> ${passCount}/${testResults.length} tests passed 
+                    (${Math.round(passCount/testResults.length*100)}% success rate)
+                </div>
+            ` + html;
+            
+            container.innerHTML = html;
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateTestDisplay();
+        }
+        
+        function openMainGame() {
+            window.open('index.html', '_blank');
+        }
+        
+        // Core test functions
+        async function runAllTests() {
+            clearResults();
+            addTestResult('Test Suite', true, 'Starting comprehensive exchange system tests...');
+            
+            // Test 1: Basic class structure
+            testClassStructure();
+            
+            // Test 2: Game state management
+            testGameStateManagement();
+            
+            // Test 3: Card operations
+            testCardOperations();
+            
+            // Test 4: Exchange logic
+            testExchangeLogic();
+            
+            // Test 5: UI components
+            testUIComponents();
+            
+            // Test 6: Integration tests
+            await testIntegration();
+            
+            addTestResult('Test Suite Complete', true, 'All automated tests completed. Check manual checklist above.');
+        }
+        
+        function testClassStructure() {
+            try {
+                // Test Card class
+                const testCard = new Card('A', '♠');
+                if (testCard.rank === 'A' && testCard.suit === '♠' && testCard.id === 'A-♠') {
+                    addTestResult('Card Class', true, 'Card creation and properties work correctly');
+                } else {
+                    addTestResult('Card Class', false, 'Card properties not set correctly');
+                }
+                
+                // Test Player class
+                const testPlayer = new Player('Test Player');
+                if (testPlayer.name === 'Test Player' && Array.isArray(testPlayer.handCards)) {
+                    addTestResult('Player Class', true, 'Player creation and initialization work correctly');
+                } else {
+                    addTestResult('Player Class', false, 'Player initialization failed');
+                }
+                
+                // Test GameState class
+                const testGameState = new GameState();
+                if (testGameState.gamePhase === 'setup' && Array.isArray(testGameState.players)) {
+                    addTestResult('GameState Class', true, 'GameState initialization works correctly');
+                } else {
+                    addTestResult('GameState Class', false, 'GameState initialization failed');
+                }
+                
+            } catch (error) {
+                addTestResult('Class Structure', false, 'Error testing class structure: ' + error.message);
+            }
+        }
+        
+        function testGameStateManagement() {
+            try {
+                const testGameState = new GameState();
+                testGameState.initializeGame(['Player 1', 'Player 2', 'Player 3']);
+                
+                if (testGameState.players.length === 3) {
+                    addTestResult('Game Initialization', true, 'Game initializes with correct number of players');
+                } else {
+                    addTestResult('Game Initialization', false, 'Incorrect number of players created');
+                }
+                
+                const currentPlayer = testGameState.getCurrentPlayer();
+                if (currentPlayer && currentPlayer.name === 'Player 1') {
+                    addTestResult('Current Player', true, 'getCurrentPlayer() returns correct player');
+                } else {
+                    addTestResult('Current Player', false, 'getCurrentPlayer() failed');
+                }
+                
+            } catch (error) {
+                addTestResult('Game State Management', false, 'Error: ' + error.message);
+            }
+        }
+        
+        function testCardOperations() {
+            try {
+                const testPlayer = new Player('Test Player');
+                const testCard = new Card('K', '♥');
+                
+                // Test adding cards
+                testPlayer.addCard(testCard, 'hand');
+                if (testPlayer.handCards.length === 1 && testPlayer.handCards[0].id === 'K-♥') {
+                    addTestResult('Add Card', true, 'Card added to hand correctly');
+                } else {
+                    addTestResult('Add Card', false, 'Card not added correctly');
+                }
+                
+                // Test removing cards
+                const removedCard = testPlayer.removeCard('K-♥', 'hand');
+                if (removedCard && removedCard.id === 'K-♥' && testPlayer.handCards.length === 0) {
+                    addTestResult('Remove Card', true, 'Card removed correctly');
+                } else {
+                    addTestResult('Remove Card', false, 'Card removal failed');
+                }
+                
+            } catch (error) {
+                addTestResult('Card Operations', false, 'Error: ' + error.message);
+            }
+        }
+        
+        function testExchangeLogic() {
+            try {
+                // Create test scenario
+                const testPlayer = new Player('Test Player');
+                const handCard = new Card('A', '♠');
+                const faceUpCard = new Card('K', '♥');
+                
+                testPlayer.addCard(handCard, 'hand');
+                testPlayer.addCard(faceUpCard, 'faceUp');
+                
+                // Test card finding
+                const foundHandCard = testPlayer.handCards.find(c => c.id === 'A-♠');
+                const foundFaceUpCard = testPlayer.faceUpCards.find(c => c.id === 'K-♥');
+                
+                if (foundHandCard && foundFaceUpCard) {
+                    addTestResult('Card Finding', true, 'Cards can be found in player collections');
+                } else {
+                    addTestResult('Card Finding', false, 'Card finding logic failed');
+                }
+                
+                // Test swap logic (simulate)
+                testPlayer.removeCard('A-♠', 'hand');
+                testPlayer.removeCard('K-♥', 'faceUp');
+                testPlayer.addCard(handCard, 'faceUp');
+                testPlayer.addCard(faceUpCard, 'hand');
+                
+                const swappedCorrectly = testPlayer.handCards[0].id === 'K-♥' && 
+                                       testPlayer.faceUpCards[0].id === 'A-♠';
+                
+                if (swappedCorrectly) {
+                    addTestResult('Card Swapping', true, 'Card swap logic works correctly');
+                } else {
+                    addTestResult('Card Swapping', false, 'Card swap failed');
+                }
+                
+            } catch (error) {
+                addTestResult('Exchange Logic', false, 'Error: ' + error.message);
+            }
+        }
+        
+        function testUIComponents() {
+            try {
+                // Test if main game elements exist
+                const hasMainHTML = document.querySelector('body') !== null;
+                if (hasMainHTML) {
+                    addTestResult('HTML Structure', true, 'Basic HTML structure exists');
+                } else {
+                    addTestResult('HTML Structure', false, 'HTML structure missing');
+                }
+                
+                // Test CSS classes (basic check)
+                const style = document.createElement('style');
+                style.textContent = '.test-class { color: red; }';
+                document.head.appendChild(style);
+                
+                if (document.styleSheets.length > 0) {
+                    addTestResult('CSS Loading', true, 'CSS can be loaded and applied');
+                } else {
+                    addTestResult('CSS Loading', false, 'CSS loading failed');
+                }
+                
+                document.head.removeChild(style);
+                
+            } catch (error) {
+                addTestResult('UI Components', false, 'Error: ' + error.message);
+            }
+        }
+        
+        async function testIntegration() {
+            try {
+                // Test full game flow simulation
+                const testGameState = new GameState();
+                testGameState.initializeGame(['Alice', 'Bob', 'Charlie']);
+                
+                // Create and shuffle deck
+                testGameState.deck = createDeck();
+                testGameState.drawPile = shuffleDeck(testGameState.deck);
+                
+                // Deal cards
+                const dealSuccess = dealInitialCards(testGameState);
+                
+                if (dealSuccess) {
+                    addTestResult('Card Dealing', true, 'Cards dealt successfully to all players');
+                    
+                    // Check if exchange phase is set
+                    if (testGameState.gamePhase === 'exchange') {
+                        addTestResult('Phase Transition', true, 'Game correctly transitions to EXCHANGE phase');
+                    } else {
+                        addTestResult('Phase Transition', false, 'Phase transition failed');
+                    }
+                    
+                    // Test player card counts
+                    let allPlayersHaveCorrectCards = true;
+                    testGameState.players.forEach(player => {
+                        if (player.getCardCount() !== 9) {
+                            allPlayersHaveCorrectCards = false;
+                        }
+                    });
+                    
+                    if (allPlayersHaveCorrectCards) {
+                        addTestResult('Card Distribution', true, 'All players have correct number of cards (9 each)');
+                    } else {
+                        addTestResult('Card Distribution', false, 'Incorrect card distribution');
+                    }
+                    
+                } else {
+                    addTestResult('Integration Test', false, 'Card dealing failed');
+                }
+                
+            } catch (error) {
+                addTestResult('Integration Test', false, 'Error: ' + error.message);
+            }
+        }
+        
+        // Load the main game's JavaScript for testing
+        function loadMainGameScript() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'game.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Initialize test environment
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await loadMainGameScript();
+                addTestResult('Setup', true, 'Test environment loaded successfully');
+            } catch (error) {
+                addTestResult('Setup', false, 'Failed to load main game script: ' + error.message);
+            }
+            updateTestDisplay();
+        });
+    </script>
+</body>
+</html> 

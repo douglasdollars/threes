@@ -941,6 +941,7 @@ const setupScreen = {
             if (isSelectable) {
                 cardElement.classList.add('exchange-card');
                 cardElement.dataset.cardType = cardType;
+                cardElement.dataset.cardId = card.id;
             }
             
             return cardElement.outerHTML;
@@ -1164,6 +1165,11 @@ const setupScreen = {
     
     // Attach exchange phase event listeners
     attachExchangeEventListeners() {
+        // Remove any existing exchange listeners to prevent duplicates
+        if (this.exchangeClickHandler) {
+            document.removeEventListener('click', this.exchangeClickHandler);
+        }
+        
         // Exchange control buttons
         const confirmBtn = document.getElementById('confirm-exchanges-btn');
         const resetBtn = document.getElementById('reset-exchanges-btn');
@@ -1180,13 +1186,14 @@ const setupScreen = {
             });
         }
         
-        // Exchange card selection
-        document.addEventListener('click', (e) => {
+        // Exchange card selection with proper cleanup
+        this.exchangeClickHandler = (e) => {
             const card = e.target.closest('.exchange-card');
             if (card) {
                 this.handleExchangeCardClick(card);
             }
-        });
+        };
+        document.addEventListener('click', this.exchangeClickHandler);
         
         // Debug controls
         const toggleDebugBtn = document.getElementById('toggle-debug');
