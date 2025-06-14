@@ -306,87 +306,204 @@ function initializeDecks(gameState) {
 // Global game state instance
 let gameState = null;
 
-// Basic initialization
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Threes Card Game initialized!');
-    console.log('Card ranks:', CARD_RANKS);
-    console.log('Card suits:', CARD_SUITS);
+// Setup Screen Module
+const setupScreen = {
+    // Initialize the setup screen
+    init() {
+        console.log('Threes Card Game initialized!');
+        this.render();
+        this.attachEventListeners();
+    },
     
-    // Test card creation and deck functions
-    const testCard = createCard('A', '♠');
-    console.log('Test card created:', testCard.toString(), 'Value:', testCard.getValue());
-    
-    // Test deck creation and shuffling
-    const deck = createDeck();
-    console.log('Full deck created:', deck.length, 'cards');
-    
-    const shuffledDeck = shuffleDeck(deck);
-    console.log('Deck shuffled. First 5 cards:', shuffledDeck.slice(0, 5).map(c => c.toString()));
-    
-    // Test game state management
-    console.log('\n=== Testing Game State Management ===');
-    gameState = new GameState();
-    const playerNames = setupPlayers(3, ['Alice', 'Bob', 'Charlie']);
-    gameState.initializeGame(playerNames);
-    initializeDecks(gameState);
-    
-    console.log('Game state summary:', gameState.getStateSummary());
-    console.log('Current player:', gameState.getCurrentPlayer().name);
-    
-    // Test player management
-    gameState.players.forEach((player, index) => {
-        console.log(`${player.name}: Hand(${player.handCards.length}), FaceUp(${player.faceUpCards.length}), FaceDown(${player.faceDownCards.length})`);
-    });
-    
-    // Create test display with game state debug area
-    const app = document.getElementById('app');
-    app.innerHTML = `
-        <h1>Threes Card Game</h1>
-        <div class="test-area">
-            <h3>Card System Test</h3>
-            <p>Deck created with ${deck.length} cards</p>
-            <div class="card-container" id="sample-cards">
-                <!-- Sample cards will be rendered here -->
+    // Render the setup screen HTML
+    render() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div id="setup-screen" class="setup-container">
+                <div class="setup-header">
+                    <h1 class="game-title">Threes</h1>
+                    <p class="game-subtitle">The Classic Card Game</p>
+                </div>
+                
+                <div class="setup-form">
+                    <div class="player-count-section">
+                        <h3>Number of Players</h3>
+                        <div class="player-count-selector">
+                            <input type="radio" id="players-2" name="playerCount" value="2">
+                            <label for="players-2">2 Players</label>
+                            
+                            <input type="radio" id="players-3" name="playerCount" value="3" checked>
+                            <label for="players-3">3 Players</label>
+                            
+                            <input type="radio" id="players-4" name="playerCount" value="4">
+                            <label for="players-4">4 Players</label>
+                        </div>
+                    </div>
+                    
+                    <div class="player-names-section">
+                        <h3>Player Names</h3>
+                        <div id="player-name-inputs" class="player-name-inputs">
+                            <!-- Player name inputs will be generated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="setup-actions">
+                        <button id="start-game-btn" class="start-game-btn">Start Game</button>
+                    </div>
+                </div>
             </div>
-            <div class="card-container" id="face-down-cards">
-                <!-- Face-down cards will be rendered here -->
+            
+            <div id="game-area" class="game-area hidden">
+                <!-- Game interface will be rendered here -->
             </div>
-        </div>
+        `;
         
-        <div class="test-area">
-            <h3>Game State Management Test</h3>
-            <div id="game-state-debug">
-                <!-- Game state info will be displayed here -->
+        // Generate initial player name inputs for 3 players (default)
+        this.generatePlayerNameInputs(3);
+    },
+    
+    // Generate player name input fields
+    generatePlayerNameInputs(count) {
+        const container = document.getElementById('player-name-inputs');
+        container.innerHTML = '';
+        
+        for (let i = 1; i <= count; i++) {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group';
+            inputGroup.innerHTML = `
+                <label for="player-${i}-name">Player ${i}</label>
+                <input type="text" id="player-${i}-name" class="player-name-input" 
+                       placeholder="Player ${i}" value="Player ${i}">
+            `;
+            container.appendChild(inputGroup);
+        }
+    },
+    
+    // Attach event listeners
+    attachEventListeners() {
+        // Player count change
+        document.querySelectorAll('input[name="playerCount"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const count = parseInt(e.target.value);
+                this.generatePlayerNameInputs(count);
+            });
+        });
+        
+        // Start game button
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            this.startGame();
+        });
+    },
+    
+    // Validate setup form
+    validateSetup() {
+        const playerCount = parseInt(document.querySelector('input[name="playerCount"]:checked').value);
+        const names = [];
+        
+        for (let i = 1; i <= playerCount; i++) {
+            const nameInput = document.getElementById(`player-${i}-name`);
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                this.showError(`Player ${i} name cannot be empty`);
+                nameInput.focus();
+                return null;
+            }
+            
+            if (names.includes(name)) {
+                this.showError(`Player names must be unique. "${name}" is already used.`);
+                nameInput.focus();
+                return null;
+            }
+            
+            names.push(name);
+        }
+        
+        return { playerCount, names };
+    },
+    
+    // Show error message  
+    showError(message) {
+        // Remove existing error
+        const existingError = document.querySelector('.setup-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'setup-error';
+        errorDiv.textContent = message;
+        
+        const setupActions = document.querySelector('.setup-actions');
+        setupActions.insertBefore(errorDiv, setupActions.firstChild);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    },
+    
+    // Start the game
+    startGame() {
+        const setupData = this.validateSetup();
+        if (!setupData) return;
+        
+        const { playerCount, names } = setupData;
+        
+        console.log(`Starting game with ${playerCount} players:`, names);
+        
+        // Initialize game state
+        gameState = new GameState();
+        gameState.initializeGame(names);
+        initializeDecks(gameState);
+        
+        console.log('Game initialized:', gameState.getStateSummary());
+        
+        // Hide setup screen and show game area
+        this.hideSetup();
+        this.showGameArea();
+    },
+    
+    // Hide setup screen
+    hideSetup() {
+        const setupScreen = document.getElementById('setup-screen');
+        setupScreen.classList.add('hidden');
+    },
+    
+    // Show game area
+    showGameArea() {
+        const gameArea = document.getElementById('game-area');
+        gameArea.classList.remove('hidden');
+        
+        // For now, show a simple game started message with debug info
+        gameArea.innerHTML = `
+            <div class="game-header">
+                <h2>Game Started!</h2>
+                <p>Players: ${gameState.players.map(p => p.name).join(', ')}</p>
             </div>
-            <button id="next-player-btn" style="margin: 10px; padding: 8px 16px;">Next Player</button>
-            <button id="refresh-state-btn" style="margin: 10px; padding: 8px 16px;">Refresh State</button>
-        </div>
-    `;
+            
+            <div class="test-area">
+                <h3>Game State Debug</h3>
+                <div id="game-state-debug">
+                    <!-- Game state info will be displayed here -->
+                </div>
+                <button id="next-player-btn" class="debug-btn">Next Player</button>
+                <button id="refresh-state-btn" class="debug-btn">Refresh State</button>
+            </div>
+        `;
+        
+        this.updateGameStateDisplay();
+        this.attachGameEventListeners();
+    },
     
-    // Render sample cards for testing
-    const sampleCardsContainer = document.getElementById('sample-cards');
-    const faceDownContainer = document.getElementById('face-down-cards');
-    
-    // Show some face-up cards (different suits and ranks)
-    const sampleCards = [
-        createCard('A', '♠'), createCard('K', '♥'), createCard('Q', '♦'), 
-        createCard('J', '♣'), createCard('10', '♠'), createCard('2', '♥')
-    ];
-    
-    sampleCards.forEach(card => {
-        const cardElement = renderCard(card, false);
-        sampleCardsContainer.appendChild(cardElement);
-    });
-    
-    // Show some face-down cards
-    for (let i = 0; i < 4; i++) {
-        const cardElement = renderCard(shuffledDeck[i], true);
-        faceDownContainer.appendChild(cardElement);
-    }
-    
-    // Function to update game state display
-    function updateGameStateDisplay() {
+    // Update game state display (same as before but moved here)
+    updateGameStateDisplay() {
         const debugArea = document.getElementById('game-state-debug');
+        if (!debugArea) return;
+        
         const summary = gameState.getStateSummary();
         
         let html = `
@@ -412,26 +529,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         debugArea.innerHTML = html;
-    }
+    },
     
-    // Initial display update
-    updateGameStateDisplay();
-    
-    // Add event listeners for testing buttons
-    document.getElementById('next-player-btn').addEventListener('click', function() {
-        gameState.nextPlayer();
-        updateGameStateDisplay();
-    });
-    
-    document.getElementById('refresh-state-btn').addEventListener('click', function() {
-        updateGameStateDisplay();
-    });
-    
-    // Add click event to test card selection
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.card.face-up')) {
-            const card = e.target.closest('.card');
-            card.classList.toggle('selected');
+    // Attach game area event listeners
+    attachGameEventListeners() {
+        const nextBtn = document.getElementById('next-player-btn');
+        const refreshBtn = document.getElementById('refresh-state-btn');
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                gameState.nextPlayer();
+                this.updateGameStateDisplay();
+            });
         }
-    });
+        
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.updateGameStateDisplay();
+            });
+        }
+    }
+};
+
+// Basic initialization
+document.addEventListener('DOMContentLoaded', function() {
+    setupScreen.init();
 }); 
