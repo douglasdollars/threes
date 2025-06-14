@@ -1364,39 +1364,92 @@ const setupScreen = {
         document.addEventListener('click', this.cardSelectionHandler);
     },
     
-    // Handle card selection logic
+    // Enhanced card selection with comprehensive validation
     handleCardSelection(cardElement) {
-        const cardId = cardElement.dataset.cardId;
-        const currentPlayer = gameState.getCurrentPlayer();
-        
-        // Check if card is selectable
-        if (!this.isCardSelectable(cardElement)) {
-            this.showGameFeedback('This card cannot be selected right now', 'error');
-            return;
-        }
-        
-        // Toggle selection
-        const isSelected = cardElement.classList.contains('selected');
-        
-        if (isSelected) {
-            // Deselect card
-            cardElement.classList.remove('selected');
-            this.removeFromSelectedCards(cardId);
-            console.log(`Deselected card: ${cardId}`);
-        } else {
-            // Check selection rules before selecting
-            if (this.canSelectCard(cardElement)) {
-                cardElement.classList.add('selected');
-                this.addToSelectedCards(cardId, cardElement);
-                console.log(`Selected card: ${cardId}`);
-            } else {
-                this.showGameFeedback('Cannot select this card with current selection', 'error');
+        try {
+            // Validate input parameters
+            if (!cardElement) {
+                this.showError('INVALID_CARD_SELECTION', 'No card element provided');
                 return;
             }
+            
+            if (!cardElement.dataset.cardId) {
+                this.showError('INVALID_CARD_SELECTION', 'Card element missing ID');
+                return;
+            }
+            
+            // Validate game state
+            if (!this.validateGameStateForSelection()) {
+                return;
+            }
+            
+            const cardId = cardElement.dataset.cardId;
+            const currentPlayer = gameState.getCurrentPlayer();
+            
+            // Check if card is selectable
+            if (!this.isCardSelectable(cardElement)) {
+                this.showError('INVALID_CARD_SELECTION', 'Card not selectable in current state', {
+                    cardId,
+                    gamePhase: gameState.gamePhase,
+                    playerHasHandCards: currentPlayer.handCards.length > 0
+                });
+                return;
+            }
+            
+            // Toggle selection
+            const isSelected = cardElement.classList.contains('selected');
+            
+            if (isSelected) {
+                // Deselect card
+                cardElement.classList.remove('selected');
+                this.removeFromSelectedCards(cardId);
+                console.log(`Deselected card: ${cardId}`);
+            } else {
+                // Check selection rules before selecting
+                if (this.canSelectCard(cardElement)) {
+                    cardElement.classList.add('selected');
+                    this.addToSelectedCards(cardId, cardElement);
+                    console.log(`Selected card: ${cardId}`);
+                } else {
+                    this.showError('INVALID_CARD_SELECTION', 'Card incompatible with current selection', {
+                        cardId,
+                        selectedCount: this.getSelectedCards().length
+                    });
+                    return;
+                }
+            }
+            
+            this.updatePlayButtonState();
+            this.updateSelectionDisplay();
+            
+        } catch (error) {
+            this.showError('GAME_STATE_ERROR', 'Error during card selection', {
+                error: error.message,
+                cardId: cardElement?.dataset?.cardId
+            });
+        }
+    },
+    
+    // Validate game state for card selection
+    validateGameStateForSelection() {
+        if (!gameState) {
+            this.showError('GAME_STATE_ERROR', 'Game state not initialized');
+            return false;
         }
         
-        this.updatePlayButtonState();
-        this.updateSelectionDisplay();
+        if (!gameState.getCurrentPlayer()) {
+            this.showError('PLAYER_ERROR', 'No current player found');
+            return false;
+        }
+        
+        if (gameState.gamePhase !== GAME_PHASES.PLAYING && gameState.gamePhase !== GAME_PHASES.EXCHANGE) {
+            this.showError('PHASE_ERROR', 'Invalid game phase for card selection', {
+                currentPhase: gameState.gamePhase
+            });
+            return false;
+        }
+        
+        return true;
     },
     
     // Check if a card can be selected based on game rules
@@ -1534,8 +1587,8 @@ const setupScreen = {
         if (controlsArea) {
             controlsArea.insertBefore(feedbackDiv, controlsArea.firstChild);
             
-            // Special effects get longer display time
-            const displayTime = type === 'special' ? 4000 : 3000;
+            // Different display times based on message type
+            const displayTime = this.getDisplayTimeForMessageType(type);
             
             // Auto-remove after specified time
             setTimeout(() => {
@@ -1543,6 +1596,167 @@ const setupScreen = {
                     feedbackDiv.remove();
                 }
             }, displayTime);
+        }
+    },
+    
+    // Enhanced error handling system
+    showError(errorType, message, context = {}) {
+        console.error(`[${errorType}] ${message}`, context);
+        
+        // Define error-specific handling
+        const errorConfig = this.getErrorConfig(errorType);
+        
+        // Show user-friendly error message
+        this.showGameFeedback(errorConfig.userMessage || message, 'error');
+        
+        // Handle error-specific recovery actions
+        if (errorConfig.recoveryAction) {
+            errorConfig.recoveryAction.call(this, context);
+        }
+        
+        // Log for debugging
+        this.logError(errorType, message, context);
+    },
+    
+    // Get display time based on message type
+    getDisplayTimeForMessageType(type) {
+        const displayTimes = {
+            'error': 5000,      // Errors need more time to read
+            'warning': 4000,    // Warnings need attention
+            'special': 4000,    // Special effects are exciting
+            'success': 3000,    // Success messages
+            'info': 3000        // Default info messages
+        };
+        
+        return displayTimes[type] || 3000;
+    },
+    
+    // Define error configurations with recovery actions
+    getErrorConfig(errorType) {
+        const errorConfigs = {
+            'INVALID_CARD_SELECTION': {
+                userMessage: '❌ Invalid card selection. Please select valid cards.',
+                recoveryAction: () => this.clearAllSelections()
+            },
+            'INVALID_PLAY': {
+                userMessage: '❌ Invalid play. Check the rules and try again.',
+                recoveryAction: () => this.clearAllSelections()
+            },
+            'GAME_STATE_ERROR': {
+                userMessage: '⚠️ Game state issue detected. Refreshing display...',
+                recoveryAction: () => this.recoverGameState()
+            },
+            'NETWORK_ERROR': {
+                userMessage: '🌐 Connection issue. Please try again.',
+                recoveryAction: () => this.handleNetworkError()
+            },
+            'VALIDATION_ERROR': {
+                userMessage: '🔍 Validation failed. Please check your selection.',
+                recoveryAction: () => this.clearAllSelections()
+            },
+            'PHASE_ERROR': {
+                userMessage: '⚠️ Game phase error. Attempting to recover...',
+                recoveryAction: (context) => this.recoverPhaseError(context)
+            },
+            'CARD_NOT_FOUND': {
+                userMessage: '🃏 Card not found. Refreshing game state...',
+                recoveryAction: () => this.updateGameBoardDisplay()
+            },
+            'PLAYER_ERROR': {
+                userMessage: '👤 Player state error. Refreshing player data...',
+                recoveryAction: () => this.refreshPlayerState()
+            }
+        };
+        
+        return errorConfigs[errorType] || {
+            userMessage: '❌ An unexpected error occurred.',
+            recoveryAction: () => this.genericErrorRecovery()
+        };
+    },
+    
+    // Log errors for debugging
+    logError(errorType, message, context) {
+        const errorLog = {
+            timestamp: new Date().toISOString(),
+            type: errorType,
+            message: message,
+            context: context,
+            gameState: gameState ? gameState.getStateSummary() : 'No game state',
+            currentPlayer: gameState ? gameState.getCurrentPlayer()?.name : 'Unknown'
+        };
+        
+        // Store in session storage for debugging
+        try {
+            const existingLogs = JSON.parse(sessionStorage.getItem('gameErrorLogs') || '[]');
+            existingLogs.push(errorLog);
+            
+            // Keep only last 50 errors
+            if (existingLogs.length > 50) {
+                existingLogs.splice(0, existingLogs.length - 50);
+            }
+            
+            sessionStorage.setItem('gameErrorLogs', JSON.stringify(existingLogs));
+        } catch (e) {
+            console.warn('Could not store error log:', e);
+        }
+    },
+    
+    // Recovery mechanisms
+    recoverGameState() {
+        console.log('Attempting game state recovery...');
+        try {
+            this.updateGameBoardDisplay();
+            this.attachCardSelectionListeners();
+            this.showGameFeedback('✅ Game state recovered', 'success');
+        } catch (error) {
+            console.error('Game state recovery failed:', error);
+            this.showGameFeedback('❌ Recovery failed. Please refresh the page.', 'error');
+        }
+    },
+    
+    handleNetworkError() {
+        console.log('Handling network error...');
+        // For now, just show a message since we don't have network features
+        this.showGameFeedback('🔄 Please check your connection and try again.', 'warning');
+    },
+    
+    recoverPhaseError(context) {
+        console.log('Attempting phase error recovery...', context);
+        try {
+            // Attempt to fix phase-related issues
+            if (gameState && gameState.gamePhase) {
+                this.renderGameBoard();
+                this.showGameFeedback('✅ Phase error recovered', 'success');
+            }
+        } catch (error) {
+            console.error('Phase recovery failed:', error);
+            this.showGameFeedback('❌ Phase recovery failed. Game may be unstable.', 'error');
+        }
+    },
+    
+    refreshPlayerState() {
+        console.log('Refreshing player state...');
+        try {
+            if (gameState && gameState.getCurrentPlayer()) {
+                this.updateCurrentPlayerCards();
+                this.updateGameBoardDisplay();
+                this.showGameFeedback('✅ Player state refreshed', 'success');
+            }
+        } catch (error) {
+            console.error('Player state refresh failed:', error);
+            this.showGameFeedback('❌ Could not refresh player state.', 'error');
+        }
+    },
+    
+    genericErrorRecovery() {
+        console.log('Attempting generic error recovery...');
+        try {
+            this.clearAllSelections();
+            this.updateGameBoardDisplay();
+            this.showGameFeedback('🔄 Attempting to recover...', 'warning');
+        } catch (error) {
+            console.error('Generic recovery failed:', error);
+            this.showGameFeedback('❌ Recovery failed. Please refresh the page.', 'error');
         }
     },
     
@@ -1562,29 +1776,73 @@ const setupScreen = {
         }
     },
     
-    // Play selected cards
+    // Enhanced play selected cards with comprehensive validation
     playSelectedCards() {
-        const selectedCards = this.getSelectedCards();
-        
-        if (selectedCards.length === 0) {
-            this.showGameFeedback('No cards selected to play', 'error');
-            return;
+        try {
+            // Validate game state
+            if (!this.validateGameStateForPlay()) {
+                return;
+            }
+            
+            const selectedCards = this.getSelectedCards();
+            
+            if (selectedCards.length === 0) {
+                this.showError('INVALID_PLAY', 'No cards selected to play');
+                return;
+            }
+            
+            // Validate the play
+            const validationResult = this.validateCardPlay(selectedCards);
+            if (!validationResult.valid) {
+                this.showError('VALIDATION_ERROR', validationResult.message, {
+                    selectedCards: selectedCards.map(item => item.card.toString()),
+                    validationResult
+                });
+                return;
+            }
+            
+            console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
+            
+            // Execute the play
+            this.executeCardPlay(selectedCards);
+            
+            // Clear selection after playing
+            this.clearAllSelections();
+            
+        } catch (error) {
+            this.showError('GAME_STATE_ERROR', 'Error during card play', {
+                error: error.message,
+                selectedCardsCount: this.getSelectedCards().length
+            });
+        }
+    },
+    
+    // Validate game state for playing cards
+    validateGameStateForPlay() {
+        if (!gameState) {
+            this.showError('GAME_STATE_ERROR', 'Game state not initialized');
+            return false;
         }
         
-        // Validate the play
-        const validationResult = this.validateCardPlay(selectedCards);
-        if (!validationResult.valid) {
-            this.showGameFeedback(validationResult.message, 'error');
-            return;
+        if (gameState.gamePhase !== GAME_PHASES.PLAYING) {
+            this.showError('PHASE_ERROR', 'Cannot play cards in current phase', {
+                currentPhase: gameState.gamePhase
+            });
+            return false;
         }
         
-        console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
+        const currentPlayer = gameState.getCurrentPlayer();
+        if (!currentPlayer) {
+            this.showError('PLAYER_ERROR', 'No current player found');
+            return false;
+        }
         
-        // Execute the play
-        this.executeCardPlay(selectedCards);
+        if (!currentPlayer.isActive) {
+            this.showError('PLAYER_ERROR', 'Current player is not active');
+            return false;
+        }
         
-        // Clear selection after playing
-        this.clearAllSelections();
+        return true;
     },
     
     // Validate if selected cards can be played

@@ -1765,6 +1765,21 @@ p {
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+    animation: errorShake 0.5s ease-in-out;
+}
+
+.game-feedback.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    font-weight: 600;
+}
+
+/* Error shake animation */
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
 }
 
 .game-feedback.info {
