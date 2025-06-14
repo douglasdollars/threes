@@ -364,8 +364,8 @@
                 testGameState.deck = createDeck();
                 testGameState.drawPile = shuffleDeck(testGameState.deck);
                 
-                // Deal cards
-                const dealSuccess = dealInitialCards(testGameState);
+                // Deal cards and initialize game properly
+                const dealSuccess = initializeDecks(testGameState);
                 
                 if (dealSuccess) {
                     addTestResult('Card Dealing', true, 'Cards dealt successfully to all players');
@@ -374,7 +374,7 @@
                     if (testGameState.gamePhase === 'exchange') {
                         addTestResult('Phase Transition', true, 'Game correctly transitions to EXCHANGE phase');
                     } else {
-                        addTestResult('Phase Transition', false, 'Phase transition failed');
+                        addTestResult('Phase Transition', false, `Phase transition failed - current phase: ${testGameState.gamePhase}`);
                     }
                     
                     // Test player card counts

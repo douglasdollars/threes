@@ -12,10 +12,10 @@ function testBasicExchangeFlow() {
         const testGameState = new GameState();
         testGameState.initializeGame(['Alice', 'Bob', 'Charlie']);
         
-        // Create and deal cards
+        // Create and deal cards using proper initialization
         testGameState.deck = createDeck();
         testGameState.drawPile = shuffleDeck(testGameState.deck);
-        const dealSuccess = dealInitialCards(testGameState);
+        const dealSuccess = initializeDecks(testGameState);
         
         console.log('✅ Game initialized and cards dealt');
         console.log('Current phase:', testGameState.gamePhase);
