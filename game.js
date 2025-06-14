@@ -828,6 +828,13 @@ const setupScreen = {
         
         if (discardPileElement) {
             discardPileElement.innerHTML = this.renderPileArea('discard');
+            
+            // Add clickable class if pile has cards and we're in playing phase
+            if (gameState.gamePhase === GAME_PHASES.PLAYING && gameState.discardPile.length > 0) {
+                discardPileElement.classList.add('clickable');
+            } else {
+                discardPileElement.classList.remove('clickable');
+            }
         }
         
         // Update current player cards
@@ -1144,6 +1151,21 @@ const setupScreen = {
             pickupPileBtn.addEventListener('click', () => {
                 this.pickUpPile();
             });
+        }
+        
+        // Add click functionality to discard pile for pickup
+        const discardPileElement = document.getElementById('discard-pile');
+        if (discardPileElement) {
+            discardPileElement.addEventListener('click', () => {
+                // Only allow pickup if there are cards in the pile and it's the playing phase
+                if (gameState.gamePhase === GAME_PHASES.PLAYING && gameState.discardPile.length > 0) {
+                    this.pickUpPile();
+                }
+            });
+            
+            // Add hover effect to indicate clickability
+            discardPileElement.style.cursor = 'pointer';
+            discardPileElement.title = 'Click to pick up pile';
         }
         
         if (passTurnBtn) {
@@ -1807,8 +1829,15 @@ const setupScreen = {
         
         console.log(`${currentPlayer.name} picks up ${discardPileSize} cards from discard pile`);
         
-        // Move all discard pile cards to player's hand
+        // Show pickup feedback immediately for large piles
+        if (discardPileSize > 5) {
+            this.showGameFeedback(`Picking up ${discardPileSize} cards...`, 'info');
+        }
+        
+        // Move all discard pile cards to player's hand efficiently
         const pickedUpCards = [...gameState.discardPile];
+        
+        // Batch add cards to avoid multiple DOM updates
         pickedUpCards.forEach(card => {
             currentPlayer.addCard(card, 'hand');
         });
@@ -1817,7 +1846,12 @@ const setupScreen = {
         gameState.discardPile = [];
         
         console.log(`${currentPlayer.name} picked up ${pickedUpCards.length} cards`);
-        this.showGameFeedback(`Picked up ${pickedUpCards.length} cards from discard pile`, 'info');
+        
+        // Show completion message
+        const message = discardPileSize === 1 ? 
+            'Picked up 1 card from discard pile' : 
+            `Picked up ${pickedUpCards.length} cards from discard pile`;
+        this.showGameFeedback(message, 'info');
         
         // Clear any selections
         this.clearAllSelections();

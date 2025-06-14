@@ -295,32 +295,32 @@
 
 ### Pick-up Pile Mechanics
 
-- [ ] Implement `pickUpPile()` function
-- [ ] Move all discard pile cards to current player's hand
-- [ ] Clear discard pile after pickup
-- [ ] Update UI to reflect pile pickup changes
+- [x] Implement `pickUpPile()` function
+- [x] Move all discard pile cards to current player's hand
+- [x] Clear discard pile after pickup
+- [x] Update UI to reflect pile pickup changes
 
 ### Pile Interaction
 
-- [ ] Connect "Pick Up Pile" button functionality
-- [ ] Add click on discard pile to pick up (alternative method)
-- [ ] Handle immediate action (no confirmation needed)
-- [ ] Manage large pile pickup efficiently
+- [x] Connect "Pick Up Pile" button functionality
+- [x] Add click on discard pile to pick up (alternative method)
+- [x] Handle immediate action (no confirmation needed)
+- [x] Manage large pile pickup efficiently
 
 ### Discard Pile Display
 
-- [ ] Show top cards of discard pile clearly
-- [ ] Display pile size indicator
-- [ ] Create visual representation of pile state
-- [ ] Handle empty pile state display
+- [x] Show top cards of discard pile clearly
+- [x] Display pile size indicator
+- [x] Create visual representation of pile state
+- [x] Handle empty pile state display
 
 ### Turn Progression
 
-- [ ] Implement automatic turn advance after pickup
-- [ ] Allow next player to start new discard pile
-- [ ] Reset selection states after pickup
-- [ ] Update current player display
-- [ ] Test with large discard piles
+- [x] Implement automatic turn advance after pickup
+- [x] Allow next player to start new discard pile
+- [x] Reset selection states after pickup
+- [x] Update current player display
+- [x] Test with large discard piles
 
 ## ✅ Step 11: Turn Transitions
 
