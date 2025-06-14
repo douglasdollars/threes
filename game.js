@@ -262,45 +262,95 @@ function setupPlayers(playerCount, playerNames = []) {
     return names;
 }
 
-// Initialize decks and deal initial cards
-function initializeDecks(gameState) {
+// Enhanced card dealing system
+function dealInitialCards(gameState) {
     if (!gameState || gameState.players.length === 0) {
-        console.error('Cannot initialize decks without valid game state and players');
-        return;
+        console.error('Cannot deal cards without valid game state and players');
+        return false;
     }
     
-    console.log('Initializing decks and dealing cards...');
+    console.log('=== Starting Card Dealing ===');
     
-    // Deal initial cards to each player
+    // Ensure we have enough cards
+    const requiredCards = gameState.players.length * 9; // 9 cards per player
+    if (gameState.drawPile.length < requiredCards) {
+        console.error(`Not enough cards in draw pile. Need ${requiredCards}, have ${gameState.drawPile.length}`);
+        return false;
+    }
+    
+    // Deal in proper order: face-down first, then face-up, then hand
+    console.log('Dealing face-down cards...');
     gameState.players.forEach(player => {
-        // Deal 3 face-down cards
         for (let i = 0; i < 3; i++) {
-            if (gameState.drawPile.length > 0) {
-                const card = gameState.drawPile.pop();
-                player.addCard(card, 'faceDown');
-            }
+            const card = gameState.drawPile.pop();
+            player.addCard(card, 'faceDown');
         }
-        
-        // Deal 3 face-up cards
+    });
+    
+    console.log('Dealing face-up cards...');
+    gameState.players.forEach(player => {
         for (let i = 0; i < 3; i++) {
-            if (gameState.drawPile.length > 0) {
-                const card = gameState.drawPile.pop();
-                player.addCard(card, 'faceUp');
-            }
+            const card = gameState.drawPile.pop();
+            player.addCard(card, 'faceUp');
         }
-        
-        // Deal 3 hand cards
+    });
+    
+    console.log('Dealing hand cards...');
+    gameState.players.forEach(player => {
         for (let i = 0; i < 3; i++) {
-            if (gameState.drawPile.length > 0) {
-                const card = gameState.drawPile.pop();
-                player.addCard(card, 'hand');
-            }
+            const card = gameState.drawPile.pop();
+            player.addCard(card, 'hand');
         }
-        
-        console.log(`${player.name}: ${player.getCardCount()} cards dealt`);
+    });
+    
+    // Log dealing results
+    gameState.players.forEach((player, index) => {
+        console.log(`${player.name}: Face-down(${player.faceDownCards.length}), Face-up(${player.faceUpCards.length}), Hand(${player.handCards.length})`);
+        console.log(`  Face-up cards: ${player.faceUpCards.map(c => c.toString()).join(', ')}`);
     });
     
     console.log(`Cards remaining in draw pile: ${gameState.drawPile.length}`);
+    console.log('=== Card Dealing Complete ===');
+    
+    return true;
+}
+
+// Determine first player based on lowest face-up card
+function determineFirstPlayer(gameState) {
+    let firstPlayerIndex = 0;
+    let lowestValue = Infinity;
+    let lowestCard = null;
+    
+    gameState.players.forEach((player, playerIndex) => {
+        player.faceUpCards.forEach(card => {
+            // Special rule: 3s are lowest, then 4s, etc.
+            // We need to invert the getValue() for this check since 3 should be considered lowest
+            let checkValue = card.getValue();
+            if (card.rank === '3') checkValue = 1; // 3s are lowest
+            else if (card.rank === '4') checkValue = 2; // then 4s
+            else if (card.rank === '5') checkValue = 3; // then 5s, etc.
+            
+            if (checkValue < lowestValue) {
+                lowestValue = checkValue;
+                lowestCard = card;
+                firstPlayerIndex = playerIndex;
+            }
+        });
+    });
+    
+    console.log(`First player: ${gameState.players[firstPlayerIndex].name} (has ${lowestCard?.toString() || 'unknown card'})`);
+    gameState.currentPlayerIndex = firstPlayerIndex;
+    return firstPlayerIndex;
+}
+
+// Initialize decks and deal initial cards (legacy function, now calls enhanced version)
+function initializeDecks(gameState) {
+    const success = dealInitialCards(gameState);
+    if (success) {
+        determineFirstPlayer(gameState);
+        gameState.gamePhase = GAME_PHASES.EXCHANGE;
+    }
+    return success;
 }
 
 // Global game state instance
