@@ -326,32 +326,32 @@
 
 ### Turn Transition Mechanics
 
-- [ ] Create `hideCurrentPlayer()` function
-- [ ] Create `showNextPlayer()` function
-- [ ] Connect "Pass to Next Player" button
-- [ ] Implement smooth UI transitions
+- [x] Create `hideCurrentPlayer()` function
+- [x] Create `showNextPlayer()` function
+- [x] Connect "Pass to Next Player" button
+- [x] Implement smooth UI transitions
 
 ### Player Visibility Management
 
-- [ ] Hide current player's hand cards on transition
-- [ ] Show transition screen with next player name
-- [ ] Reveal next player's cards on confirmation
-- [ ] Maintain table card visibility for all players throughout
+- [x] Hide current player's hand cards on transition
+- [x] Show transition screen with next player name
+- [x] Reveal next player's cards on confirmation
+- [x] Maintain table card visibility for all players throughout
 
 ### Turn Flow Control
 
-- [ ] Implement `nextTurn()` function in GameState
-- [ ] Handle different player states (active, finished)
-- [ ] Skip finished players in turn order
-- [ ] Update current player indicator
+- [x] Implement `nextTurn()` function in GameState
+- [x] Handle different player states (active, finished)
+- [x] Skip finished players in turn order
+- [x] Update current player indicator
 
 ### UI State Management
 
-- [ ] Clear card selections on turn change
-- [ ] Reset button states for new player
-- [ ] Update player name display
-- [ ] Handle control button visibility
-- [ ] Test full turn cycle with multiple players
+- [x] Clear card selections on turn change
+- [x] Reset button states for new player
+- [x] Update player name display
+- [x] Handle control button visibility
+- [x] Test full turn cycle with multiple players
 
 ## ✅ Step 12: Special Card Effects
 

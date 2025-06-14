@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 11: Turn Transitions Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="setup-screen">
+            <h1>Threes (Shithead) - Step 11 Test</h1>
+            <p>Testing turn transitions with player visibility management</p>
+            
+            <div class="setup-form">
+                <div class="form-group">
+                    <label for="player-count">Number of Players:</label>
+                    <select id="player-count">
+                        <option value="2">2 Players</option>
+                        <option value="3" selected>3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                </div>
+                
+                <div id="player-names-container">
+                    <!-- Player name inputs will be generated here -->
+                </div>
+                
+                <button id="start-game-btn" class="start-btn">Start Game</button>
+                <div id="setup-error" class="error-message"></div>
+            </div>
+        </div>
+        
+        <div id="game-area" style="display: none;">
+            <!-- Game board will be rendered here -->
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+    <script>
+        // Test Step 11 specific functionality
+        console.log('=== Step 11 Turn Transitions Test ===');
+        
+        // Override some functions for testing
+        const originalPassTurn = gameManager.passTurn;
+        gameManager.passTurn = function() {
+            console.log('Testing turn transition...');
+            originalPassTurn.call(this);
+        };
+        
+        // Test transition overlay creation
+        function testTransitionOverlay() {
+            console.log('Testing transition overlay creation...');
+            
+            // Simulate a turn transition
+            if (typeof gameState !== 'undefined' && gameState.players.length > 0) {
+                gameManager.showTurnTransition();
+                
+                setTimeout(() => {
+                    const overlay = document.getElementById('turn-transition-overlay');
+                    if (overlay) {
+                        console.log('✅ Transition overlay created successfully');
+                        
+                        // Test continue button
+                        const continueBtn = document.getElementById('continue-turn-btn');
+                        if (continueBtn) {
+                            console.log('✅ Continue button found');
+                        } else {
+                            console.log('❌ Continue button not found');
+                        }
+                    } else {
+                        console.log('❌ Transition overlay not created');
+                    }
+                }, 100);
+            }
+        }
+        
+        // Test button state management
+        function testButtonStates() {
+            console.log('Testing button state management...');
+            
+            // Test disabling buttons
+            gameManager.setControlButtonsEnabled(false);
+            
+            const buttons = ['play-selected-btn', 'pick-up-pile-btn', 'pass-turn-btn'];
+            let allDisabled = true;
+            
+            buttons.forEach(buttonId => {
+                const button = document.getElementById(buttonId);
+                if (button && !button.disabled) {
+                    allDisabled = false;
+                }
+            });
+            
+            if (allDisabled) {
+                console.log('✅ Buttons disabled correctly');
+            } else {
+                console.log('❌ Some buttons not disabled');
+            }
+            
+            // Test enabling buttons
+            gameManager.setControlButtonsEnabled(true);
+            
+            let allEnabled = true;
+            buttons.forEach(buttonId => {
+                const button = document.getElementById(buttonId);
+                if (button && button.disabled) {
+                    allEnabled = false;
+                }
+            });
+            
+            if (allEnabled) {
+                console.log('✅ Buttons enabled correctly');
+            } else {
+                console.log('❌ Some buttons not enabled');
+            }
+        }
+        
+        // Run tests after game starts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for game to be set up
+            setTimeout(() => {
+                if (typeof gameState !== 'undefined' && gameState.gamePhase === 'playing') {
+                    testTransitionOverlay();
+                    testButtonStates();
+                }
+            }, 2000);
+        });
+        
+        console.log('Step 11 test script loaded');
+    </script>
+</body>
+</html> 
