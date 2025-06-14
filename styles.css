@@ -1,0 +1,77 @@
+/* ABOUTME: This file contains all the CSS styling for the Threes card game web application */
+/* ABOUTME: It includes reset rules, layout styling, card styling, and responsive design elements */
+
+/* CSS Reset/Normalize */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* CSS Custom Properties */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --background-color: #ecf0f1;
+    --card-background: #ffffff;
+    --card-border: #bdc3c7;
+    --text-color: #2c3e50;
+    --red-suit: #e74c3c;
+    --black-suit: #2c3e50;
+    --card-width: 80px;
+    --card-height: 112px;
+    --border-radius: 8px;
+    --font-family: 'Arial', sans-serif;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Basic Body Styling */
+body {
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Main Container Styling */
+#app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Basic Typography */
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2.5rem;
+}
+
+p {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--secondary-color);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+} 
