@@ -890,4 +890,296 @@ p {
         min-width: auto;
         text-align: left;
     }
+}
+
+/* Exchange Phase Styling */
+.exchange-phase {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.exchange-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--accent-color), #2980b9);
+    color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.exchange-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.8rem;
+}
+
+.exchange-subtitle {
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.exchange-progress {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.exchange-instructions {
+    margin-bottom: 30px;
+}
+
+.instructions-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--accent-color);
+}
+
+.instructions-card h3 {
+    color: var(--primary-color);
+    margin: 0 0 15px 0;
+}
+
+.instructions-card ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.instructions-card li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.exchange-player-area {
+    background-color: white;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+}
+
+.exchange-player-area h3 {
+    color: var(--primary-color);
+    margin: 0 0 20px 0;
+    text-align: center;
+    font-size: 1.3rem;
+}
+
+.exchange-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.exchange-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-section-header {
+    text-align: left;
+}
+
+.card-section-header h4 {
+    color: var(--primary-color);
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+}
+
+.card-section-header p {
+    color: var(--secondary-color);
+    margin: 0;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.exchange-hand,
+.exchange-face-up,
+.exchange-face-down {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    min-height: calc(var(--card-height) + 30px);
+    align-items: center;
+}
+
+.exchange-hand {
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+}
+
+.exchange-face-up {
+    background-color: #e8f4fd;
+    border: 2px dashed var(--accent-color);
+}
+
+.exchange-face-down {
+    background-color: #f5f5f5;
+    border: 2px solid #e0e0e0;
+}
+
+/* Exchange Cards */
+.exchange-card {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.exchange-card.selectable {
+    cursor: pointer;
+}
+
+.exchange-card.selectable:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.exchange-card.selected {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(52, 152, 219, 0.4);
+    border-color: var(--accent-color);
+    border-width: 3px;
+}
+
+.exchange-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Exchange Controls */
+.exchange-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.exchange-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.exchange-btn.primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.exchange-btn.primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.exchange-btn.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.exchange-btn.secondary:hover {
+    background-color: #545b62;
+    transform: translateY(-2px);
+}
+
+/* Exchange Feedback */
+.exchange-feedback {
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+}
+
+.exchange-feedback.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.exchange-feedback.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.exchange-feedback.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Exchange */
+@media (max-width: 768px) {
+    .exchange-phase {
+        padding: 15px;
+    }
+    
+    .exchange-header {
+        padding: 15px;
+    }
+    
+    .exchange-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .instructions-card {
+        padding: 15px;
+    }
+    
+    .exchange-player-area {
+        padding: 20px;
+    }
+    
+    .exchange-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .exchange-btn {
+        width: 100%;
+    }
+    
+    .exchange-hand,
+    .exchange-face-up,
+    .exchange-face-down {
+        padding: 10px;
+        justify-content: center;
+    }
 } 

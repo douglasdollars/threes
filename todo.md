@@ -168,35 +168,35 @@
 
 ### Dealing Logic
 
-- [ ] Implement `dealInitialCards()` method in GameState
-- [ ] Deal 3 face-down cards to each player
-- [ ] Deal 3 face-up cards on top of face-down cards
-- [ ] Deal 3 hand cards to each player
-- [ ] Set up draw pile with remaining cards
-- [ ] Test dealing with different player counts
+- [x] Implement `dealInitialCards()` method in GameState
+- [x] Deal 3 face-down cards to each player
+- [x] Deal 3 face-up cards on top of face-down cards
+- [x] Deal 3 hand cards to each player
+- [x] Set up draw pile with remaining cards
+- [x] Test dealing with different player counts
 
 ### Card Rendering System
 
-- [ ] Create `renderPlayerArea()` function for each player's cards
-- [ ] Create `renderCenterArea()` function for draw/discard piles
-- [ ] Implement different rendering for face-up, face-down, and hand cards
-- [ ] Hide other players' hand cards initially
+- [x] Create `renderPlayerArea()` function for each player's cards
+- [x] Create `renderCenterArea()` function for draw/discard piles
+- [x] Implement different rendering for face-up, face-down, and hand cards
+- [x] Hide other players' hand cards initially
 
 ### Game Initialization Flow
 
-- [ ] Connect setup screen completion to dealing
-- [ ] Update game board display after dealing
-- [ ] Set game phase to EXCHANGE
-- [ ] Implement first player determination based on face-up cards
+- [x] Connect setup screen completion to dealing
+- [x] Update game board display after dealing
+- [x] Set game phase to EXCHANGE
+- [x] Implement first player determination based on face-up cards
 
 ### Visual Representation
 
-- [ ] Display all face-up cards for all players
-- [ ] Display face-down cards (card backs) for all players
-- [ ] Show current player's hand cards
-- [ ] Display draw pile with count
-- [ ] Show empty discard pile initially
-- [ ] Test card distribution matches game rules
+- [x] Display all face-up cards for all players
+- [x] Display face-down cards (card backs) for all players
+- [x] Show current player's hand cards
+- [x] Display draw pile with count
+- [x] Show empty discard pile initially
+- [x] Test card distribution matches game rules
 
 ## ✅ Step 7: Card Exchange Phase
 

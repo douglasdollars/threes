@@ -562,8 +562,13 @@ const setupScreen = {
         const gameArea = document.getElementById('game-area');
         gameArea.classList.remove('hidden');
         
-        // Render the complete game board
-        this.renderGameBoard();
+        // Check game phase and render appropriate interface
+        if (gameState.gamePhase === GAME_PHASES.EXCHANGE) {
+            this.renderExchangePhase();
+        } else {
+            this.renderGameBoard();
+        }
+        
         this.attachGameEventListeners();
     },
     
@@ -833,6 +838,235 @@ const setupScreen = {
         this.attachCardSelectionListeners();
     },
     
+    // Exchange Phase Management
+    renderExchangePhase() {
+        const gameArea = document.getElementById('game-area');
+        const currentPlayer = gameState.getCurrentPlayer();
+        const currentPlayerIndex = gameState.currentPlayerIndex;
+        const totalPlayers = gameState.players.length;
+        
+        gameArea.innerHTML = `
+            <div class="exchange-phase">
+                <div class="exchange-header">
+                    <h2>Card Exchange Phase</h2>
+                    <p class="exchange-subtitle">Players can swap cards between hand and face-up positions</p>
+                    <div class="exchange-progress">
+                        <span>Player ${currentPlayerIndex + 1} of ${totalPlayers}: <strong>${currentPlayer.name}</strong></span>
+                    </div>
+                </div>
+                
+                <div class="exchange-instructions">
+                    <div class="instructions-card">
+                        <h3>Instructions for ${currentPlayer.name}</h3>
+                        <ul>
+                            <li>Click a <strong>Hand Card</strong>, then click a <strong>Face-Up Card</strong> to swap them</li>
+                            <li>Face-up cards will be visible to all players during the game</li>
+                            <li>Choose your face-up cards wisely - other players can see them!</li>
+                            <li>Click "Confirm Exchanges" when you're satisfied with your arrangement</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="exchange-player-area">
+                    <h3>${currentPlayer.name}'s Cards</h3>
+                    
+                    <div class="exchange-cards">
+                        <!-- Hand Cards -->
+                        <div class="exchange-row">
+                            <div class="card-section-header">
+                                <h4>Hand Cards</h4>
+                                <p>Click to select for swapping</p>
+                            </div>
+                            <div class="card-container exchange-hand" id="exchange-hand">
+                                ${this.generateExchangeCardsHTML(currentPlayer.handCards, 'hand')}
+                            </div>
+                        </div>
+                        
+                        <!-- Face-Up Cards -->
+                        <div class="exchange-row">
+                            <div class="card-section-header">
+                                <h4>Face-Up Cards</h4>
+                                <p>Will be visible to all players</p>
+                            </div>
+                            <div class="card-container exchange-face-up" id="exchange-face-up">
+                                ${this.generateExchangeCardsHTML(currentPlayer.faceUpCards, 'faceUp')}
+                            </div>
+                        </div>
+                        
+                        <!-- Face-Down Cards (non-interactive) -->
+                        <div class="exchange-row">
+                            <div class="card-section-header">
+                                <h4>Face-Down Cards</h4>
+                                <p>Hidden until later in the game</p>
+                            </div>
+                            <div class="card-container exchange-face-down">
+                                ${this.generateExchangeCardsHTML(currentPlayer.faceDownCards, 'faceDown')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="exchange-controls">
+                    <button id="confirm-exchanges-btn" class="exchange-btn primary">Confirm Exchanges</button>
+                    <button id="reset-exchanges-btn" class="exchange-btn secondary">Reset to Original</button>
+                </div>
+                
+                <!-- Debug Area (temporary) -->
+                <div class="debug-area">
+                    <button id="toggle-debug" class="debug-toggle">Show Debug</button>
+                    <div id="debug-panel" class="debug-panel hidden">
+                        <h4>Exchange Debug</h4>
+                        <div id="game-state-debug"></div>
+                        <button id="refresh-state-btn" class="debug-btn">Refresh</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.initializeExchangeState();
+        this.updateGameStateDisplay();
+    },
+    
+    // Generate HTML for exchange cards
+    generateExchangeCardsHTML(cards, cardType) {
+        if (cards.length === 0) {
+            return '<div class="empty-card-slot">Empty</div>';
+        }
+        
+        return cards.map(card => {
+            const isSelectable = cardType === 'hand' || cardType === 'faceUp';
+            const isFaceDown = cardType === 'faceDown';
+            const cardElement = renderCard(card, isFaceDown, isSelectable);
+            
+            if (isSelectable) {
+                cardElement.classList.add('exchange-card');
+                cardElement.dataset.cardType = cardType;
+            }
+            
+            return cardElement.outerHTML;
+        }).join('');
+    },
+    
+    // Initialize exchange state tracking
+    initializeExchangeState() {
+        this.exchangeState = {
+            selectedCard: null,
+            selectedCardType: null,
+            originalCards: {
+                hand: [...gameState.getCurrentPlayer().handCards],
+                faceUp: [...gameState.getCurrentPlayer().faceUpCards]
+            }
+        };
+    },
+    
+    // Handle card swapping logic
+    swapCards(card1Id, type1, card2Id, type2) {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        // Find the cards
+        const card1 = this.findCardInPlayer(currentPlayer, card1Id);
+        const card2 = this.findCardInPlayer(currentPlayer, card2Id);
+        
+        if (!card1 || !card2) {
+            console.error('Could not find cards for swapping');
+            return false;
+        }
+        
+        // Remove cards from their current locations
+        currentPlayer.removeCard(card1Id, type1);
+        currentPlayer.removeCard(card2Id, type2);
+        
+        // Add cards to their new locations
+        currentPlayer.addCard(card1, type2);
+        currentPlayer.addCard(card2, type1);
+        
+        console.log(`Swapped ${card1.toString()} (${type1}) with ${card2.toString()} (${type2})`);
+        return true;
+    },
+    
+    // Find a card in a player's collection
+    findCardInPlayer(player, cardId) {
+        let foundCard = null;
+        
+        // Search in all card collections
+        foundCard = player.handCards.find(card => card.id === cardId);
+        if (foundCard) return foundCard;
+        
+        foundCard = player.faceUpCards.find(card => card.id === cardId);
+        if (foundCard) return foundCard;
+        
+        foundCard = player.faceDownCards.find(card => card.id === cardId);
+        return foundCard;
+    },
+    
+    // Reset cards to original state
+    resetExchanges() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        // Clear current cards
+        currentPlayer.handCards = [...this.exchangeState.originalCards.hand];
+        currentPlayer.faceUpCards = [...this.exchangeState.originalCards.faceUp];
+        
+        // Re-render the exchange interface
+        this.updateExchangeDisplay();
+        
+        console.log('Exchanges reset to original state');
+    },
+    
+    // Update the exchange display
+    updateExchangeDisplay() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        const handContainer = document.getElementById('exchange-hand');
+        const faceUpContainer = document.getElementById('exchange-face-up');
+        
+        if (handContainer) {
+            handContainer.innerHTML = this.generateExchangeCardsHTML(currentPlayer.handCards, 'hand');
+        }
+        
+        if (faceUpContainer) {
+            faceUpContainer.innerHTML = this.generateExchangeCardsHTML(currentPlayer.faceUpCards, 'faceUp');
+        }
+        
+        // Clear any selection state
+        this.exchangeState.selectedCard = null;
+        this.exchangeState.selectedCardType = null;
+        
+        // Re-attach event listeners
+        this.attachExchangeEventListeners();
+    },
+    
+    // Confirm exchanges and move to next player
+    confirmExchanges() {
+        console.log(`${gameState.getCurrentPlayer().name} confirmed their exchanges`);
+        
+        // Move to next player or finish exchange phase
+        const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+        
+        if (nextPlayerIndex === 0) {
+            // All players have completed exchanges
+            this.finishExchangePhase();
+        } else {
+            // Move to next player
+            gameState.currentPlayerIndex = nextPlayerIndex;
+            this.renderExchangePhase();
+        }
+    },
+    
+    // Finish exchange phase and move to playing
+    finishExchangePhase() {
+        console.log('All players have completed card exchanges');
+        
+        // Set game phase to playing
+        gameState.gamePhase = GAME_PHASES.PLAYING;
+        
+        // Reset to first player for actual gameplay
+        gameState.currentPlayerIndex = 0;
+        
+        // Render the main game board
+        this.renderGameBoard();
+    },
+    
     // Update game state display (same as before but moved here)
     updateGameStateDisplay() {
         const debugArea = document.getElementById('game-state-debug');
@@ -920,8 +1154,138 @@ const setupScreen = {
             });
         }
         
-        // Card selection for current player
-        this.attachCardSelectionListeners();
+        // Card selection for current player (only for main game)
+        if (gameState.gamePhase === GAME_PHASES.PLAYING) {
+            this.attachCardSelectionListeners();
+        } else if (gameState.gamePhase === GAME_PHASES.EXCHANGE) {
+            this.attachExchangeEventListeners();
+        }
+    },
+    
+    // Attach exchange phase event listeners
+    attachExchangeEventListeners() {
+        // Exchange control buttons
+        const confirmBtn = document.getElementById('confirm-exchanges-btn');
+        const resetBtn = document.getElementById('reset-exchanges-btn');
+        
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                this.confirmExchanges();
+            });
+        }
+        
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetExchanges();
+            });
+        }
+        
+        // Exchange card selection
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.exchange-card');
+            if (card) {
+                this.handleExchangeCardClick(card);
+            }
+        });
+        
+        // Debug controls
+        const toggleDebugBtn = document.getElementById('toggle-debug');
+        const refreshBtn = document.getElementById('refresh-state-btn');
+        
+        if (toggleDebugBtn) {
+            toggleDebugBtn.addEventListener('click', () => {
+                const debugPanel = document.getElementById('debug-panel');
+                const isHidden = debugPanel.classList.contains('hidden');
+                
+                if (isHidden) {
+                    debugPanel.classList.remove('hidden');
+                    toggleDebugBtn.textContent = 'Hide Debug';
+                    this.updateGameStateDisplay();
+                } else {
+                    debugPanel.classList.add('hidden');
+                    toggleDebugBtn.textContent = 'Show Debug';
+                }
+            });
+        }
+        
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.updateGameStateDisplay();
+            });
+        }
+    },
+    
+    // Handle clicking on exchange cards
+    handleExchangeCardClick(cardElement) {
+        const cardId = cardElement.dataset.cardId;
+        const cardType = cardElement.dataset.cardType;
+        
+        // Clear previous selections
+        document.querySelectorAll('.exchange-card.selected').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        if (this.exchangeState.selectedCard === null) {
+            // First card selection
+            this.exchangeState.selectedCard = cardId;
+            this.exchangeState.selectedCardType = cardType;
+            cardElement.classList.add('selected');
+            
+            console.log(`Selected ${cardType} card: ${cardId}`);
+        } else if (this.exchangeState.selectedCard === cardId) {
+            // Deselect the same card
+            this.exchangeState.selectedCard = null;
+            this.exchangeState.selectedCardType = null;
+            
+            console.log('Deselected card');
+        } else {
+            // Second card selection - attempt swap
+            const firstCardId = this.exchangeState.selectedCard;
+            const firstCardType = this.exchangeState.selectedCardType;
+            
+            if (firstCardType !== cardType) {
+                // Valid swap (different types)
+                console.log(`Attempting to swap ${firstCardType} ${firstCardId} with ${cardType} ${cardId}`);
+                
+                if (this.swapCards(firstCardId, firstCardType, cardId, cardType)) {
+                    this.updateExchangeDisplay();
+                    this.showExchangeFeedback('Cards swapped successfully!', 'success');
+                } else {
+                    this.showExchangeFeedback('Failed to swap cards', 'error');
+                }
+            } else {
+                // Invalid swap (same type)
+                this.showExchangeFeedback('Cannot swap cards of the same type', 'error');
+            }
+            
+            // Clear selection
+            this.exchangeState.selectedCard = null;
+            this.exchangeState.selectedCardType = null;
+        }
+    },
+    
+    // Show feedback message during exchange
+    showExchangeFeedback(message, type = 'info') {
+        // Remove existing feedback
+        const existingFeedback = document.querySelector('.exchange-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+        
+        // Create new feedback message
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = `exchange-feedback ${type}`;
+        feedbackDiv.textContent = message;
+        
+        const exchangeControls = document.querySelector('.exchange-controls');
+        exchangeControls.insertBefore(feedbackDiv, exchangeControls.firstChild);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (feedbackDiv.parentNode) {
+                feedbackDiv.remove();
+            }
+        }, 3000);
     },
     
     // Attach card selection event listeners
