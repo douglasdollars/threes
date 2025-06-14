@@ -478,25 +478,209 @@ const setupScreen = {
         const gameArea = document.getElementById('game-area');
         gameArea.classList.remove('hidden');
         
-        // For now, show a simple game started message with debug info
+        // Render the complete game board
+        this.renderGameBoard();
+        this.attachGameEventListeners();
+    },
+    
+    // Render the complete game board layout
+    renderGameBoard() {
+        const gameArea = document.getElementById('game-area');
+        const playerCount = gameState.players.length;
+        const currentPlayerIndex = gameState.currentPlayerIndex;
+        
         gameArea.innerHTML = `
-            <div class="game-header">
-                <h2>Game Started!</h2>
-                <p>Players: ${gameState.players.map(p => p.name).join(', ')}</p>
-            </div>
-            
-            <div class="test-area">
-                <h3>Game State Debug</h3>
-                <div id="game-state-debug">
-                    <!-- Game state info will be displayed here -->
+            <div class="game-board" data-player-count="${playerCount}">
+                <!-- Current Player Name Display -->
+                <div class="current-player-display">
+                    <h3 id="current-player-name">${gameState.getCurrentPlayer().name}'s Turn</h3>
                 </div>
-                <button id="next-player-btn" class="debug-btn">Next Player</button>
-                <button id="refresh-state-btn" class="debug-btn">Refresh State</button>
+                
+                <!-- Game Table Layout -->
+                <div class="game-table">
+                    <!-- Other Players Areas -->
+                    <div class="other-players-container">
+                        ${this.generateOtherPlayersHTML()}
+                    </div>
+                    
+                    <!-- Center Area (Draw Pile & Discard Pile) -->
+                    <div class="center-area">
+                        <div class="draw-pile-area">
+                            <div class="pile-container">
+                                <div id="draw-pile" class="card-pile">
+                                    <div class="pile-placeholder">
+                                        <span class="pile-count">${gameState.drawPile.length}</span>
+                                        <span class="pile-label">Draw</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="discard-pile-area">
+                            <div class="pile-container">
+                                <div id="discard-pile" class="card-pile">
+                                    <div class="pile-placeholder">
+                                        <span class="pile-count">${gameState.discardPile.length}</span>
+                                        <span class="pile-label">Discard</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Player Area (Bottom) -->
+                    <div class="current-player-area">
+                        <div class="player-section" data-player-index="${currentPlayerIndex}">
+                            <h4 class="player-name">${gameState.getCurrentPlayer().name} (You)</h4>
+                            
+                            <!-- Player's Cards -->
+                            <div class="player-cards">
+                                <!-- Face-down table cards -->
+                                <div class="card-row face-down-row">
+                                    <div class="card-row-label">Face Down</div>
+                                    <div class="card-container" id="current-player-face-down">
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceDown')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Face-up table cards -->
+                                <div class="card-row face-up-row">
+                                    <div class="card-row-label">Face Up</div>
+                                    <div class="card-container" id="current-player-face-up">
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceUp')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Hand cards -->
+                                <div class="card-row hand-row">
+                                    <div class="card-row-label">Hand</div>
+                                    <div class="card-container" id="current-player-hand">
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'hand')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button id="play-selected-btn" class="control-btn" disabled>Play Selected Cards</button>
+                    <button id="pick-up-pile-btn" class="control-btn">Pick Up Pile</button>
+                    <button id="pass-turn-btn" class="control-btn">Pass to Next Player</button>
+                </div>
+                
+                <!-- Debug Area (temporary) -->
+                <div class="debug-area">
+                    <button id="toggle-debug" class="debug-toggle">Show Debug</button>
+                    <div id="debug-panel" class="debug-panel hidden">
+                        <h4>Game State Debug</h4>
+                        <div id="game-state-debug"></div>
+                        <button id="refresh-state-btn" class="debug-btn">Refresh</button>
+                    </div>
+                </div>
             </div>
         `;
         
+        this.updateGameBoardDisplay();
+    },
+    
+    // Generate HTML for other players (not current player)
+    generateOtherPlayersHTML() {
+        const currentPlayerIndex = gameState.currentPlayerIndex;
+        const otherPlayers = gameState.players.filter((_, index) => index !== currentPlayerIndex);
+        const playerCount = gameState.players.length;
+        
+        return otherPlayers.map((player, relativeIndex) => {
+            const actualIndex = gameState.players.findIndex(p => p === player);
+            const position = this.getPlayerPosition(relativeIndex, playerCount - 1);
+            
+            return `
+                <div class="other-player ${position}" data-player-index="${actualIndex}">
+                    <h4 class="player-name">${player.name}</h4>
+                    <div class="player-cards-summary">
+                        <div class="card-summary">
+                            <span class="card-count">${player.faceDownCards.length}</span>
+                            <span class="card-type">Face Down</span>
+                        </div>
+                        <div class="card-summary">
+                            <span class="card-count">${player.faceUpCards.length}</span>
+                            <span class="card-type">Face Up</span>
+                        </div>
+                        <div class="card-summary">
+                            <span class="card-count">${player.handCards.length}</span>
+                            <span class="card-type">Hand</span>
+                        </div>
+                    </div>
+                    <!-- Show actual face-up cards for other players -->
+                    <div class="visible-cards">
+                        ${this.generatePlayerCardsHTML(player, 'faceUp')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    // Get position class for other players based on player count
+    getPlayerPosition(relativeIndex, totalOthers) {
+        if (totalOthers === 1) {
+            return 'position-top';
+        } else if (totalOthers === 2) {
+            return relativeIndex === 0 ? 'position-top-left' : 'position-top-right';
+        } else if (totalOthers === 3) {
+            const positions = ['position-top', 'position-left', 'position-right'];
+            return positions[relativeIndex];
+        }
+        return 'position-top';
+    },
+    
+    // Generate HTML for a player's cards
+    generatePlayerCardsHTML(player, cardType) {
+        let cards;
+        let faceDown = false;
+        
+        switch(cardType) {
+            case 'hand':
+                cards = player.handCards;
+                break;
+            case 'faceUp':
+                cards = player.faceUpCards;
+                break;
+            case 'faceDown':
+                cards = player.faceDownCards;
+                faceDown = true;
+                break;
+            default:
+                return '';
+        }
+        
+        if (cards.length === 0) {
+            return '<div class="empty-card-slot">Empty</div>';
+        }
+        
+        return cards.map(card => {
+            const cardElement = renderCard(card, faceDown);
+            return cardElement.outerHTML;
+        }).join('');
+    },
+    
+    // Update the game board display
+    updateGameBoardDisplay() {
+        // Update current player name
+        const currentPlayerNameEl = document.getElementById('current-player-name');
+        if (currentPlayerNameEl) {
+            currentPlayerNameEl.textContent = `${gameState.getCurrentPlayer().name}'s Turn`;
+        }
+        
+        // Update pile counts
+        const drawPileCount = document.querySelector('#draw-pile .pile-count');
+        const discardPileCount = document.querySelector('#discard-pile .pile-count');
+        
+        if (drawPileCount) drawPileCount.textContent = gameState.drawPile.length;
+        if (discardPileCount) discardPileCount.textContent = gameState.discardPile.length;
+        
+        // Update debug display if visible
         this.updateGameStateDisplay();
-        this.attachGameEventListeners();
     },
     
     // Update game state display (same as before but moved here)
@@ -533,13 +717,50 @@ const setupScreen = {
     
     // Attach game area event listeners
     attachGameEventListeners() {
-        const nextBtn = document.getElementById('next-player-btn');
+        // Control buttons
+        const playSelectedBtn = document.getElementById('play-selected-btn');
+        const pickupPileBtn = document.getElementById('pick-up-pile-btn');
+        const passTurnBtn = document.getElementById('pass-turn-btn');
+        
+        if (playSelectedBtn) {
+            playSelectedBtn.addEventListener('click', () => {
+                console.log('Play Selected Cards clicked');
+                // TODO: Implement card playing logic
+            });
+        }
+        
+        if (pickupPileBtn) {
+            pickupPileBtn.addEventListener('click', () => {
+                console.log('Pick Up Pile clicked');
+                // TODO: Implement pile pickup logic
+            });
+        }
+        
+        if (passTurnBtn) {
+            passTurnBtn.addEventListener('click', () => {
+                console.log('Pass Turn clicked');
+                gameState.nextPlayer();
+                this.renderGameBoard(); // Re-render entire board for new player
+            });
+        }
+        
+        // Debug controls
+        const toggleDebugBtn = document.getElementById('toggle-debug');
         const refreshBtn = document.getElementById('refresh-state-btn');
         
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                gameState.nextPlayer();
-                this.updateGameStateDisplay();
+        if (toggleDebugBtn) {
+            toggleDebugBtn.addEventListener('click', () => {
+                const debugPanel = document.getElementById('debug-panel');
+                const isHidden = debugPanel.classList.contains('hidden');
+                
+                if (isHidden) {
+                    debugPanel.classList.remove('hidden');
+                    toggleDebugBtn.textContent = 'Hide Debug';
+                    this.updateGameStateDisplay();
+                } else {
+                    debugPanel.classList.add('hidden');
+                    toggleDebugBtn.textContent = 'Show Debug';
+                }
             });
         }
         
@@ -547,6 +768,37 @@ const setupScreen = {
             refreshBtn.addEventListener('click', () => {
                 this.updateGameStateDisplay();
             });
+        }
+        
+        // Card selection for current player
+        this.attachCardSelectionListeners();
+    },
+    
+    // Attach card selection event listeners
+    attachCardSelectionListeners() {
+        // Add click handlers to current player's hand and face-up cards
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.card.face-up');
+            if (card && this.isCurrentPlayerCard(card)) {
+                card.classList.toggle('selected');
+                this.updatePlayButtonState();
+            }
+        });
+    },
+    
+    // Check if a card belongs to the current player
+    isCurrentPlayerCard(cardElement) {
+        const playerArea = cardElement.closest('.current-player-area, .current-player-hand, .current-player-face-up');
+        return playerArea !== null;
+    },
+    
+    // Update play button state based on selected cards
+    updatePlayButtonState() {
+        const selectedCards = document.querySelectorAll('.current-player-area .card.selected');
+        const playBtn = document.getElementById('play-selected-btn');
+        
+        if (playBtn) {
+            playBtn.disabled = selectedCards.length === 0;
         }
     }
 };
