@@ -397,6 +397,14 @@ const setupScreen = {
         console.log('Threes Card Game initialized!');
         this.render();
         this.attachEventListeners();
+        this.initializeDebouncedUpdates();
+        
+        // Set up performance monitoring
+        setInterval(() => {
+            this.validateGamePerformance();
+        }, 30000); // Check every 30 seconds
+        
+        console.log('GameManager initialized with performance optimizations');
     },
     
     // Render the setup screen HTML
@@ -1760,6 +1768,155 @@ const setupScreen = {
         }
     },
     
+    // Enhanced card play with animations
+    executeCardPlayWithAnimation(selectedCards) {
+        // Add playing animation to selected cards
+        selectedCards.forEach(item => {
+            if (item.element) {
+                item.element.classList.add('playing');
+            }
+        });
+        
+        // Show button loading state
+        this.setButtonLoadingState('play-selected-btn', true);
+        
+        // Execute play after brief animation delay
+        setTimeout(() => {
+            this.executeCardPlay(selectedCards);
+            this.setButtonLoadingState('play-selected-btn', false);
+            
+            // Remove animation classes after play
+            setTimeout(() => {
+                selectedCards.forEach(item => {
+                    if (item.element) {
+                        item.element.classList.remove('playing');
+                    }
+                });
+            }, 100);
+        }, 400);
+    },
+    
+    // Set button loading state
+    setButtonLoadingState(buttonId, isLoading) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
+        }
+    },
+    
+    // Set button success state
+    setButtonSuccessState(buttonId, duration = 1000) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.classList.add('success');
+            setTimeout(() => {
+                button.classList.remove('success');
+            }, duration);
+        }
+    },
+    
+    // Add dealing animation to cards
+    addDealingAnimation(cardElement, delay = 0) {
+        if (cardElement) {
+            setTimeout(() => {
+                cardElement.classList.add('dealing');
+                setTimeout(() => {
+                    cardElement.classList.remove('dealing');
+                }, 800);
+            }, delay);
+        }
+    },
+    
+    // Enhanced card rendering with animations
+    renderCardWithAnimation(card, faceDown = false, isSelectable = false, animationDelay = 0) {
+        const cardElement = renderCard(card, faceDown, isSelectable);
+        this.addDealingAnimation(cardElement, animationDelay);
+        return cardElement;
+    },
+    
+    // Performance optimization: Debounced DOM updates
+    debouncedUpdateDisplay: null,
+    
+    initializeDebouncedUpdates() {
+        this.debouncedUpdateDisplay = this.debounce(() => {
+            this.updateGameBoardDisplay();
+        }, 100);
+    },
+    
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+    
+    // Clean up event listeners to prevent memory leaks
+    cleanupEventListeners() {
+        // Remove card selection listeners
+        document.querySelectorAll('.card.selectable').forEach(card => {
+            card.removeEventListener('click', this.handleCardSelection);
+        });
+        
+        // Remove button listeners
+        const buttons = ['play-selected-btn', 'pick-up-pile-btn', 'pass-turn-btn'];
+        buttons.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.removeEventListener('click', this.boundButtonHandlers?.[buttonId]);
+            }
+        });
+        
+        // Clear any pending timeouts
+        if (this.feedbackTimeout) {
+            clearTimeout(this.feedbackTimeout);
+        }
+        
+        console.log('Event listeners cleaned up');
+    },
+    
+    // Optimized DOM manipulation
+    batchDOMUpdates(updates) {
+        // Use requestAnimationFrame for smooth updates
+        requestAnimationFrame(() => {
+            updates.forEach(update => update());
+        });
+    },
+    
+    // Enhanced game state validation with performance checks
+    validateGamePerformance() {
+        const startTime = performance.now();
+        
+        // Check for memory leaks
+        const cardElements = document.querySelectorAll('.card');
+        const feedbackElements = document.querySelectorAll('.game-feedback');
+        
+        if (cardElements.length > 100) {
+            console.warn('High number of card elements detected:', cardElements.length);
+        }
+        
+        if (feedbackElements.length > 5) {
+            console.warn('Multiple feedback elements detected, cleaning up...');
+            // Keep only the latest feedback
+            for (let i = 0; i < feedbackElements.length - 1; i++) {
+                feedbackElements[i].remove();
+            }
+        }
+        
+        const endTime = performance.now();
+        console.log(`Performance check completed in ${endTime - startTime}ms`);
+    },
+    
     // Check if a card belongs to the current player
     isCurrentPlayerCard(cardElement) {
         const playerArea = cardElement.closest('.current-player-area, .current-player-hand, .current-player-face-up');
@@ -1803,11 +1960,11 @@ const setupScreen = {
             
             console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
             
-            // Execute the play
-            this.executeCardPlay(selectedCards);
-            
-            // Clear selection after playing
-            this.clearAllSelections();
+                // Execute the play with animation
+    this.executeCardPlayWithAnimation(selectedCards);
+    
+    // Clear selection after playing
+    this.clearAllSelections();
             
         } catch (error) {
             this.showError('GAME_STATE_ERROR', 'Error during card play', {

@@ -1626,41 +1626,123 @@ p {
     }
 }
 
-/* Card Selection Styling */
+/* Enhanced Card Selection Styling with Smooth Animations */
 .card.selectable {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .card.selectable:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    z-index: 5;
 }
 
 .card.selected {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(52, 152, 219, 0.4);
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 12px 24px rgba(52, 152, 219, 0.5);
     border-color: var(--accent-color);
     border-width: 3px;
     position: relative;
+    z-index: 10;
+    animation: cardSelected 0.4s ease-out;
 }
 
 .card.selected::after {
     content: '✓';
     position: absolute;
-    top: -8px;
-    right: -8px;
-    background-color: var(--accent-color);
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, var(--accent-color), #2980b9);
     color: white;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
-    z-index: 10;
+    z-index: 15;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+    animation: checkmarkPop 0.3s ease-out 0.1s both;
+}
+
+/* Card selection animation */
+@keyframes cardSelected {
+    0% {
+        transform: translateY(-3px) scale(1.02);
+    }
+    50% {
+        transform: translateY(-12px) scale(1.08);
+    }
+    100% {
+        transform: translateY(-8px) scale(1.05);
+    }
+}
+
+/* Checkmark pop animation */
+@keyframes checkmarkPop {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(-90deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Card movement animations */
+.card.moving {
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 20;
+}
+
+.card.dealing {
+    animation: cardDeal 0.8s ease-out;
+}
+
+@keyframes cardDeal {
+    0% {
+        transform: translateX(-100px) translateY(-50px) rotate(-15deg) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(-20px) translateY(-10px) rotate(-5deg) scale(0.95);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Card play animation */
+.card.playing {
+    animation: cardPlay 0.8s ease-in-out;
+    z-index: 25;
+}
+
+@keyframes cardPlay {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    30% {
+        transform: translateY(-20px) scale(1.1);
+    }
+    70% {
+        transform: translateY(-40px) translateX(0) scale(1.05);
+    }
+    100% {
+        transform: translateY(-60px) translateX(20px) scale(0.9);
+        opacity: 0.7;
+    }
 }
 
 /* Game Controls Styling */
@@ -1704,88 +1786,236 @@ p {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.control-btn:active::before {
+    width: 300px;
+    height: 300px;
 }
 
 .control-btn.primary {
-    background-color: var(--accent-color);
+    background: linear-gradient(135deg, var(--accent-color), #2980b9);
     color: white;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
 }
 
 .control-btn.primary:hover:not(:disabled) {
-    background-color: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
 }
 
 .control-btn.primary:disabled {
-    background-color: #bdc3c7;
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
+    opacity: 0.6;
 }
 
 .control-btn.secondary {
-    background-color: #6c757d;
+    background: linear-gradient(135deg, #6c757d, #545b62);
     color: white;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
 }
 
 .control-btn.secondary:hover {
-    background-color: #545b62;
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #545b62, #3d4449);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
 }
 
 .control-btn.tertiary {
-    background-color: #e9ecef;
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
     color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(233, 236, 239, 0.5);
 }
 
 .control-btn.tertiary:hover {
-    background-color: #dee2e6;
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #dee2e6, #ced4da);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(233, 236, 239, 0.6);
 }
 
-/* Game Feedback */
+/* Button success state */
+.control-btn.success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Button loading state */
+.control-btn.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.control-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Enhanced Game Feedback */
 .game-feedback {
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
+    padding: 12px 20px;
+    border-radius: 8px;
     margin-bottom: 15px;
     text-align: center;
-    font-weight: 500;
-    animation: slideIn 0.3s ease;
+    font-weight: 600;
+    animation: feedbackSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.game-feedback::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s ease-in-out;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 .game-feedback.success {
-    background-color: #d4edda;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
     color: #155724;
-    border: 1px solid #c3e6cb;
+    border: 2px solid #28a745;
+    animation: feedbackSlideIn 0.4s ease, successGlow 0.6s ease-out;
+}
+
+@keyframes successGlow {
+    0% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4); }
+    100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
 }
 
 .game-feedback.error {
-    background-color: #f8d7da;
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
     color: #721c24;
-    border: 1px solid #f5c6cb;
-    animation: errorShake 0.5s ease-in-out;
+    border: 2px solid #dc3545;
+    animation: feedbackSlideIn 0.4s ease, errorShake 0.5s ease-in-out, errorGlow 0.6s ease-out;
+}
+
+@keyframes errorGlow {
+    0% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 4px 20px rgba(220, 53, 69, 0.4); }
+    100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
 }
 
 .game-feedback.warning {
-    background-color: #fff3cd;
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
     color: #856404;
-    border: 1px solid #ffeaa7;
+    border: 2px solid #ffc107;
     font-weight: 600;
+    animation: feedbackSlideIn 0.4s ease, warningPulse 0.8s ease-out;
 }
 
-/* Error shake animation */
-@keyframes errorShake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    75% { transform: translateX(3px); }
+@keyframes warningPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
 }
 
 .game-feedback.info {
-    background-color: #d1ecf1;
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
     color: #0c5460;
-    border: 1px solid #bee5eb;
+    border: 2px solid #17a2b8;
+    animation: feedbackSlideIn 0.4s ease;
+}
+
+.game-feedback.special {
+    background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+    color: #0c5460;
+    border: 2px solid #3498db;
+    animation: feedbackSlideIn 0.4s ease, specialSparkle 1s ease-out;
+    font-size: 1.1em;
+}
+
+@keyframes specialSparkle {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    25% { 
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+    }
+    50% { 
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    }
+    75% { 
+        transform: scale(1.03);
+        box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+    }
+}
+
+/* Enhanced slide-in animation */
+@keyframes feedbackSlideIn {
+    0% {
+        transform: translateY(-20px) scale(0.95);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(-5px) scale(1.02);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Enhanced error shake animation */
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0) scale(1); }
+    25% { transform: translateX(-5px) scale(1.01); }
+    75% { transform: translateX(5px) scale(1.01); }
 }
 
 /* Card Selection Rules Display */
