@@ -4,28 +4,28 @@
 
 ### HTML Setup
 
-- [ ] Create `index.html` with proper HTML5 structure
-- [ ] Add title "Threes Card Game"
-- [ ] Link to `styles.css` and `game.js`
-- [ ] Create main container div with `id="app"`
-- [ ] Test that all files are properly linked
+- [x] Create `index.html` with proper HTML5 structure
+- [x] Add title "Threes Card Game"
+- [x] Link to `styles.css` and `game.js`
+- [x] Create main container div with `id="app"`
+- [x] Test that all files are properly linked
 
 ### CSS Setup
 
-- [ ] Create `styles.css` file
-- [ ] Add CSS reset/normalize rules
-- [ ] Set basic body styling (font-family, margin, padding)
-- [ ] Create container styling for main app area
-- [ ] Define CSS custom properties for colors and common values
+- [x] Create `styles.css` file
+- [x] Add CSS reset/normalize rules
+- [x] Set basic body styling (font-family, margin, padding)
+- [x] Create container styling for main app area
+- [x] Define CSS custom properties for colors and common values
 
 ### JavaScript Setup
 
-- [ ] Create `game.js` file
-- [ ] Define basic Card class or object structure
-- [ ] Create card ranks array: `['2', 'A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']`
-- [ ] Create card suits array: `['♠', '♥', '♦', '♣']`
-- [ ] Implement basic card creation function
-- [ ] Test basic structure works in browser
+- [x] Create `game.js` file
+- [x] Define basic Card class or object structure
+- [x] Create card ranks array: `['2', 'A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']`
+- [x] Create card suits array: `['♠', '♥', '♦', '♣']`
+- [x] Implement basic card creation function
+- [x] Test basic structure works in browser
 
 ## ✅ Step 2: Card System and Styling
 
