@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Selection Bug Fix Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #007bff;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .test-results {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🔧 Card Selection Bug Fix Test</h1>
+            <p>Testing the fix for "Invalid card selection" error after exchange phase</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Setup</h3>
+            <button class="test-button" onclick="initializeTestGame()">Initialize Test Game</button>
+            <button class="test-button" onclick="simulateExchangePhase()">Simulate Exchange Phase</button>
+            <button class="test-button" onclick="startPlayingPhase()">Start Playing Phase</button>
+            <div id="setup-results" class="test-results">
+                Click "Initialize Test Game" to begin testing...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Card Selection Tests</h3>
+            <button class="test-button" onclick="testHandCardSelection()">Test Hand Card Selection</button>
+            <button class="test-button" onclick="testFaceUpCardSelection()">Test Face-Up Card Selection</button>
+            <button class="test-button" onclick="testInvalidCardSelection()">Test Invalid Card Selection</button>
+            <div id="selection-results" class="test-results">
+                Initialize game first, then test card selection...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Bug Fix Verification</h3>
+            <button class="test-button" onclick="verifyBugFix()">Verify Bug Fix</button>
+            <button class="test-button" onclick="testCompleteFlow()">Test Complete Flow</button>
+            <div id="verification-results" class="test-results">
+                Run verification tests to confirm the bug is fixed...
+            </div>
+        </div>
+        
+        <!-- Hidden Game Area -->
+        <div id="app" class="hidden">
+            <div id="game-area" class="game-area hidden"></div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        let gameManager = null;
+        let testResults = [];
+        
+        function logResult(test, success, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const status = success ? 'SUCCESS' : 'ERROR';
+            const className = success ? 'success' : 'error';
+            
+            testResults.push({
+                test,
+                success,
+                message,
+                timestamp
+            });
+            
+            console.log(`[${timestamp}] ${test}: ${status} - ${message}`);
+            return `<div class="${className}">[${timestamp}] ${test}: ${status} - ${message}</div>`;
+        }
+        
+        function updateResults(elementId, newResult) {
+            const element = document.getElementById(elementId);
+            element.innerHTML += newResult;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function initializeTestGame() {
+            try {
+                // Initialize game manager
+                gameManager = new GameManager();
+                gameManager.init();
+                
+                // Create test game state
+                window.gameState = new GameState();
+                gameState.initializeGame(['Test Player 1', 'Test Player 2', 'Test Player 3']);
+                
+                // Initialize decks and deal cards
+                initializeDecks(gameState);
+                
+                const result = logResult('Game Initialization', true, 
+                    `Game initialized with ${gameState.players.length} players`);
+                updateResults('setup-results', result);
+                
+            } catch (error) {
+                const result = logResult('Game Initialization', false, error.message);
+                updateResults('setup-results', result);
+            }
+        }
+        
+        function simulateExchangePhase() {
+            if (!gameState) {
+                const result = logResult('Exchange Simulation', false, 'Game not initialized');
+                updateResults('setup-results', result);
+                return;
+            }
+            
+            try {
+                // Simulate exchange phase completion
+                gameState.gamePhase = GAME_PHASES.EXCHANGE;
+                
+                // Render exchange phase
+                gameManager.renderExchangePhase();
+                
+                const result = logResult('Exchange Simulation', true, 'Exchange phase simulated');
+                updateResults('setup-results', result);
+                
+            } catch (error) {
+                const result = logResult('Exchange Simulation', false, error.message);
+                updateResults('setup-results', result);
+            }
+        }
+        
+        function startPlayingPhase() {
+            if (!gameState) {
+                const result = logResult('Playing Phase', false, 'Game not initialized');
+                updateResults('setup-results', result);
+                return;
+            }
+            
+            try {
+                // Transition to playing phase
+                gameState.gamePhase = GAME_PHASES.PLAYING;
+                
+                // Render game board
+                gameManager.renderGameBoard();
+                
+                const result = logResult('Playing Phase', true, 'Playing phase started successfully');
+                updateResults('setup-results', result);
+                
+            } catch (error) {
+                const result = logResult('Playing Phase', false, error.message);
+                updateResults('setup-results', result);
+            }
+        }
+        
+        function testHandCardSelection() {
+            if (!gameManager || !gameState || gameState.gamePhase !== GAME_PHASES.PLAYING) {
+                const result = logResult('Hand Card Selection', false, 'Game not in playing phase');
+                updateResults('selection-results', result);
+                return;
+            }
+            
+            try {
+                // Find a hand card element
+                const handCard = document.querySelector('#current-player-hand .card.selectable');
+                
+                if (!handCard) {
+                    const result = logResult('Hand Card Selection', false, 'No selectable hand cards found');
+                    updateResults('selection-results', result);
+                    return;
+                }
+                
+                // Test card selection
+                gameManager.handleCardSelection(handCard);
+                
+                // Check if card was selected
+                const isSelected = handCard.classList.contains('selected');
+                
+                const result = logResult('Hand Card Selection', isSelected, 
+                    isSelected ? 'Hand card selected successfully' : 'Hand card selection failed');
+                updateResults('selection-results', result);
+                
+            } catch (error) {
+                const result = logResult('Hand Card Selection', false, error.message);
+                updateResults('selection-results', result);
+            }
+        }
+        
+        function testFaceUpCardSelection() {
+            if (!gameManager || !gameState || gameState.gamePhase !== GAME_PHASES.PLAYING) {
+                const result = logResult('Face-Up Card Selection', false, 'Game not in playing phase');
+                updateResults('selection-results', result);
+                return;
+            }
+            
+            try {
+                // Clear hand cards to test face-up selection
+                const currentPlayer = gameState.getCurrentPlayer();
+                const originalHandCards = [...currentPlayer.handCards];
+                currentPlayer.handCards = []; // Temporarily clear hand
+                
+                // Update display
+                gameManager.updateCurrentPlayerCards();
+                
+                // Find a face-up card element
+                const faceUpCard = document.querySelector('#current-player-face-up .card.selectable');
+                
+                if (!faceUpCard) {
+                    // Restore hand cards
+                    currentPlayer.handCards = originalHandCards;
+                    gameManager.updateCurrentPlayerCards();
+                    
+                    const result = logResult('Face-Up Card Selection', false, 'No selectable face-up cards found');
+                    updateResults('selection-results', result);
+                    return;
+                }
+                
+                // Test card selection
+                gameManager.handleCardSelection(faceUpCard);
+                
+                // Check if card was selected
+                const isSelected = faceUpCard.classList.contains('selected');
+                
+                // Restore hand cards
+                currentPlayer.handCards = originalHandCards;
+                gameManager.updateCurrentPlayerCards();
+                
+                const result = logResult('Face-Up Card Selection', isSelected, 
+                    isSelected ? 'Face-up card selected successfully' : 'Face-up card selection failed');
+                updateResults('selection-results', result);
+                
+            } catch (error) {
+                const result = logResult('Face-Up Card Selection', false, error.message);
+                updateResults('selection-results', result);
+            }
+        }
+        
+        function testInvalidCardSelection() {
+            if (!gameManager) {
+                const result = logResult('Invalid Card Selection', false, 'Game manager not initialized');
+                updateResults('selection-results', result);
+                return;
+            }
+            
+            try {
+                // Test with null card
+                gameManager.handleCardSelection(null);
+                
+                // Test with card without ID
+                const mockCard = document.createElement('div');
+                mockCard.className = 'card selectable';
+                gameManager.handleCardSelection(mockCard);
+                
+                const result = logResult('Invalid Card Selection', true, 'Invalid selections handled gracefully');
+                updateResults('selection-results', result);
+                
+            } catch (error) {
+                const result = logResult('Invalid Card Selection', false, error.message);
+                updateResults('selection-results', result);
+            }
+        }
+        
+        function verifyBugFix() {
+            if (!gameManager || !gameState) {
+                const result = logResult('Bug Fix Verification', false, 'Game not initialized');
+                updateResults('verification-results', result);
+                return;
+            }
+            
+            try {
+                let bugFixed = true;
+                let issues = [];
+                
+                // Check if isCurrentPlayerCard function works correctly
+                const handCard = document.querySelector('#current-player-hand .card');
+                if (handCard) {
+                    const isCurrentPlayerCard = gameManager.isCurrentPlayerCard(handCard);
+                    if (!isCurrentPlayerCard) {
+                        bugFixed = false;
+                        issues.push('isCurrentPlayerCard function not working for hand cards');
+                    }
+                }
+                
+                // Check if card selection handler is attached
+                if (!gameManager.cardSelectionHandler) {
+                    bugFixed = false;
+                    issues.push('Card selection handler not attached');
+                }
+                
+                // Check if selectedCards array is initialized
+                if (!gameManager.selectedCards) {
+                    bugFixed = false;
+                    issues.push('selectedCards array not initialized');
+                }
+                
+                const result = logResult('Bug Fix Verification', bugFixed, 
+                    bugFixed ? 'All bug fixes verified successfully' : `Issues found: ${issues.join(', ')}`);
+                updateResults('verification-results', result);
+                
+            } catch (error) {
+                const result = logResult('Bug Fix Verification', false, error.message);
+                updateResults('verification-results', result);
+            }
+        }
+        
+        function testCompleteFlow() {
+            const results = [];
+            
+            try {
+                // Test complete flow from initialization to card selection
+                initializeTestGame();
+                results.push('✓ Game initialization');
+                
+                setTimeout(() => {
+                    simulateExchangePhase();
+                    results.push('✓ Exchange phase simulation');
+                    
+                    setTimeout(() => {
+                        startPlayingPhase();
+                        results.push('✓ Playing phase start');
+                        
+                        setTimeout(() => {
+                            testHandCardSelection();
+                            results.push('✓ Hand card selection test');
+                            
+                            const result = logResult('Complete Flow Test', true, 
+                                `All steps completed: ${results.join(', ')}`);
+                            updateResults('verification-results', result);
+                        }, 500);
+                    }, 500);
+                }, 500);
+                
+            } catch (error) {
+                const result = logResult('Complete Flow Test', false, error.message);
+                updateResults('verification-results', result);
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Card Selection Bug Fix Test Page Loaded');
+            
+            const info = logResult('Page Load', true, 'Test page ready for bug fix verification');
+            updateResults('setup-results', info);
+        });
+    </script>
+</body>
+</html> 

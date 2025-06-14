@@ -1356,6 +1356,11 @@ const setupScreen = {
     
     // Attach card selection event listeners
     attachCardSelectionListeners() {
+        // Initialize selected cards array if not exists
+        if (!this.selectedCards) {
+            this.initializeSelectedCards();
+        }
+        
         // Remove any existing card selection listeners to prevent duplicates
         if (this.cardSelectionHandler) {
             document.removeEventListener('click', this.cardSelectionHandler);
@@ -1363,7 +1368,7 @@ const setupScreen = {
         
         // Card selection handler for playing phase
         this.cardSelectionHandler = (e) => {
-            const card = e.target.closest('.card.face-up');
+            const card = e.target.closest('.card.selectable');
             if (card && this.isCurrentPlayerCard(card)) {
                 this.handleCardSelection(card);
             }
@@ -1476,8 +1481,8 @@ const setupScreen = {
         
         // If player has hand cards, they must play from hand first
         if (currentPlayer.handCards.length > 0) {
-            const cardArea = cardElement.closest('.current-player-hand, .current-player-face-up');
-            return cardArea && cardArea.classList.contains('current-player-hand');
+            const handContainer = cardElement.closest('#current-player-hand');
+            return handContainer !== null;
         }
         
         // If no hand cards, can play face-up cards
@@ -1919,8 +1924,13 @@ const setupScreen = {
     
     // Check if a card belongs to the current player
     isCurrentPlayerCard(cardElement) {
-        const playerArea = cardElement.closest('.current-player-area, .current-player-hand, .current-player-face-up');
-        return playerArea !== null;
+        // Check if card is in current player area or any of the current player card containers
+        const playerArea = cardElement.closest('.current-player-area');
+        const handContainer = cardElement.closest('#current-player-hand');
+        const faceUpContainer = cardElement.closest('#current-player-face-up');
+        const faceDownContainer = cardElement.closest('#current-player-face-down');
+        
+        return playerArea !== null || handContainer !== null || faceUpContainer !== null || faceDownContainer !== null;
     },
     
     // Update play button state based on selected cards
