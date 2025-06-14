@@ -219,7 +219,7 @@ function shuffleDeck(deck) {
 }
 
 // Create DOM element for a card
-function renderCard(card, faceDown = false) {
+function renderCard(card, faceDown = false, isSelectable = false) {
     const cardElement = document.createElement('div');
     cardElement.className = 'card';
     cardElement.dataset.cardId = card.id;
@@ -235,6 +235,10 @@ function renderCard(card, faceDown = false) {
             cardElement.classList.add('black-suit');
         }
         
+        if (isSelectable) {
+            cardElement.classList.add('selectable');
+        }
+        
         cardElement.innerHTML = `
             <div class="card-content">
                 <div class="card-rank">${card.rank}</div>
@@ -244,6 +248,36 @@ function renderCard(card, faceDown = false) {
     }
     
     return cardElement;
+}
+
+// Render player area with all card types
+function renderPlayerArea(player, isCurrentPlayer = false) {
+    const playerCards = {
+        faceDown: player.faceDownCards.map(card => 
+            renderCard(card, true, false).outerHTML
+        ).join(''),
+        faceUp: player.faceUpCards.map(card => 
+            renderCard(card, false, isCurrentPlayer).outerHTML
+        ).join(''),
+        hand: isCurrentPlayer ? player.handCards.map(card => 
+            renderCard(card, false, true).outerHTML
+        ).join('') : ''
+    };
+    
+    return playerCards;
+}
+
+// Render center area (draw and discard piles)
+function renderCenterArea(gameState) {
+    const drawPileHTML = gameState.drawPile.length > 0 ? 
+        renderCard(gameState.drawPile[gameState.drawPile.length - 1], true).outerHTML : 
+        '<div class="empty-pile">Empty</div>';
+        
+    const discardPileHTML = gameState.discardPile.length > 0 ?
+        gameState.discardPile.slice(-3).map(card => renderCard(card, false).outerHTML).join('') :
+        '<div class="empty-pile">Empty</div>';
+        
+    return { drawPileHTML, discardPileHTML };
 }
 
 // Basic card creation function
@@ -558,10 +592,11 @@ const setupScreen = {
                         <div class="draw-pile-area">
                             <div class="pile-container">
                                 <div id="draw-pile" class="card-pile">
-                                    <div class="pile-placeholder">
-                                        <span class="pile-count">${gameState.drawPile.length}</span>
-                                        <span class="pile-label">Draw</span>
-                                    </div>
+                                    ${this.renderPileArea('draw')}
+                                </div>
+                                <div class="pile-info">
+                                    <span class="pile-count">${gameState.drawPile.length}</span>
+                                    <span class="pile-label">Draw</span>
                                 </div>
                             </div>
                         </div>
@@ -569,10 +604,11 @@ const setupScreen = {
                         <div class="discard-pile-area">
                             <div class="pile-container">
                                 <div id="discard-pile" class="card-pile">
-                                    <div class="pile-placeholder">
-                                        <span class="pile-count">${gameState.discardPile.length}</span>
-                                        <span class="pile-label">Discard</span>
-                                    </div>
+                                    ${this.renderPileArea('discard')}
+                                </div>
+                                <div class="pile-info">
+                                    <span class="pile-count">${gameState.discardPile.length}</span>
+                                    <span class="pile-label">Discard</span>
                                 </div>
                             </div>
                         </div>
@@ -589,7 +625,7 @@ const setupScreen = {
                                 <div class="card-row face-down-row">
                                     <div class="card-row-label">Face Down</div>
                                     <div class="card-container" id="current-player-face-down">
-                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceDown')}
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceDown', true)}
                                     </div>
                                 </div>
                                 
@@ -597,7 +633,7 @@ const setupScreen = {
                                 <div class="card-row face-up-row">
                                     <div class="card-row-label">Face Up</div>
                                     <div class="card-container" id="current-player-face-up">
-                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceUp')}
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'faceUp', true)}
                                     </div>
                                 </div>
                                 
@@ -605,7 +641,7 @@ const setupScreen = {
                                 <div class="card-row hand-row">
                                     <div class="card-row-label">Hand</div>
                                     <div class="card-container" id="current-player-hand">
-                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'hand')}
+                                        ${this.generatePlayerCardsHTML(gameState.getCurrentPlayer(), 'hand', true)}
                                     </div>
                                 </div>
                             </div>
@@ -664,7 +700,7 @@ const setupScreen = {
                     </div>
                     <!-- Show actual face-up cards for other players -->
                     <div class="visible-cards">
-                        ${this.generatePlayerCardsHTML(player, 'faceUp')}
+                        ${this.generatePlayerCardsHTML(player, 'faceUp', false)}
                     </div>
                 </div>
             `;
@@ -685,20 +721,24 @@ const setupScreen = {
     },
     
     // Generate HTML for a player's cards
-    generatePlayerCardsHTML(player, cardType) {
+    generatePlayerCardsHTML(player, cardType, isCurrentPlayer = false) {
         let cards;
         let faceDown = false;
+        let isSelectable = false;
         
         switch(cardType) {
             case 'hand':
                 cards = player.handCards;
+                isSelectable = isCurrentPlayer; // Only current player can select hand cards
                 break;
             case 'faceUp':
                 cards = player.faceUpCards;
+                isSelectable = isCurrentPlayer; // Only current player can select their face-up cards
                 break;
             case 'faceDown':
                 cards = player.faceDownCards;
                 faceDown = true;
+                isSelectable = false; // Face-down cards are never selectable during normal play
                 break;
             default:
                 return '';
@@ -709,9 +749,30 @@ const setupScreen = {
         }
         
         return cards.map(card => {
-            const cardElement = renderCard(card, faceDown);
+            const cardElement = renderCard(card, faceDown, isSelectable);
             return cardElement.outerHTML;
         }).join('');
+    },
+    
+    // Render pile area (draw or discard)
+    renderPileArea(pileType) {
+        if (pileType === 'draw') {
+            if (gameState.drawPile.length > 0) {
+                // Show face-down card for draw pile
+                return renderCard(gameState.drawPile[gameState.drawPile.length - 1], true).outerHTML;
+            } else {
+                return '<div class="empty-pile">Empty</div>';
+            }
+        } else if (pileType === 'discard') {
+            if (gameState.discardPile.length > 0) {
+                // Show top 1-3 cards of discard pile, layered
+                const topCards = gameState.discardPile.slice(-3);
+                return topCards.map(card => renderCard(card, false).outerHTML).join('');
+            } else {
+                return '<div class="empty-pile">Empty</div>';
+            }
+        }
+        return '<div class="empty-pile">Empty</div>';
     },
     
     // Update the game board display
@@ -723,14 +784,53 @@ const setupScreen = {
         }
         
         // Update pile counts
-        const drawPileCount = document.querySelector('#draw-pile .pile-count');
-        const discardPileCount = document.querySelector('#discard-pile .pile-count');
+        const drawPileCount = document.querySelector('.draw-pile-area .pile-count');
+        const discardPileCount = document.querySelector('.discard-pile-area .pile-count');
         
         if (drawPileCount) drawPileCount.textContent = gameState.drawPile.length;
         if (discardPileCount) discardPileCount.textContent = gameState.discardPile.length;
         
+        // Update pile visuals
+        const drawPileElement = document.getElementById('draw-pile');
+        const discardPileElement = document.getElementById('discard-pile');
+        
+        if (drawPileElement) {
+            drawPileElement.innerHTML = this.renderPileArea('draw');
+        }
+        
+        if (discardPileElement) {
+            discardPileElement.innerHTML = this.renderPileArea('discard');
+        }
+        
+        // Update current player cards
+        this.updateCurrentPlayerCards();
+        
         // Update debug display if visible
         this.updateGameStateDisplay();
+    },
+    
+    // Update current player's card displays
+    updateCurrentPlayerCards() {
+        const currentPlayer = gameState.getCurrentPlayer();
+        
+        const faceDownContainer = document.getElementById('current-player-face-down');
+        const faceUpContainer = document.getElementById('current-player-face-up');
+        const handContainer = document.getElementById('current-player-hand');
+        
+        if (faceDownContainer) {
+            faceDownContainer.innerHTML = this.generatePlayerCardsHTML(currentPlayer, 'faceDown', true);
+        }
+        
+        if (faceUpContainer) {
+            faceUpContainer.innerHTML = this.generatePlayerCardsHTML(currentPlayer, 'faceUp', true);
+        }
+        
+        if (handContainer) {
+            handContainer.innerHTML = this.generatePlayerCardsHTML(currentPlayer, 'hand', true);
+        }
+        
+        // Re-attach card selection listeners
+        this.attachCardSelectionListeners();
     },
     
     // Update game state display (same as before but moved here)

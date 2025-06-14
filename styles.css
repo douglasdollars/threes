@@ -152,6 +152,28 @@ p {
     color: var(--black-suit);
 }
 
+/* Selectable Cards */
+.card.selectable {
+    cursor: pointer;
+}
+
+.card.selectable:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card.selectable.selected {
+    border-color: var(--accent-color);
+    background-color: #e8f4fd;
+    transform: translateY(-6px);
+    box-shadow: 0 8px 16px rgba(52, 152, 219, 0.3);
+}
+
+/* Non-selectable cards shouldn't react to hover as much */
+.card:not(.selectable):hover {
+    transform: translateY(-1px);
+}
+
 /* Card Container for layout */
 .card-container {
     display: flex;
@@ -594,6 +616,13 @@ p {
     gap: 8px;
 }
 
+.pile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
 .card-pile {
     width: var(--card-width);
     height: var(--card-height);
@@ -631,6 +660,42 @@ p {
     color: #cccccc;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Empty Pile Styling */
+.empty-pile {
+    width: var(--card-width);
+    height: var(--card-height);
+    border: 2px dashed #ffffff40;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+    font-size: 0.8rem;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Discard pile should show layered cards */
+.card-pile .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-pile .card:nth-child(1) {
+    transform: rotate(-2deg) translateY(2px);
+    z-index: 1;
+}
+
+.card-pile .card:nth-child(2) {
+    transform: rotate(1deg) translateY(1px);
+    z-index: 2;
+}
+
+.card-pile .card:nth-child(3) {
+    transform: rotate(0deg);
+    z-index: 3;
 }
 
 /* Current Player Area */
