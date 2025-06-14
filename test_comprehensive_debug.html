@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Debug Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .debug-section {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .debug-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .test-controls {
+            margin: 10px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #218838;
+        }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        .issue-summary {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Comprehensive Debug Test</h1>
+        
+        <div class="issue-summary">
+            <h3>🚨 Issues to Debug:</h3>
+            <ol>
+                <li><strong>Play Button Issue:</strong> Cards can be selected but "Play Selected Card" doesn't execute the play</li>
+                <li><strong>Exchange Phase Issue:</strong> Exchange phase starts with Player 2 instead of Player 1</li>
+            </ol>
+        </div>
+        
+        <div class="debug-section">
+            <h3>Test Controls</h3>
+            <div class="test-controls">
+                <button onclick="testGameInitialization()">1. Test Game Initialization</button>
+                <button onclick="testExchangePhaseStart()">2. Test Exchange Phase Start</button>
+                <button onclick="testPlayButtonFlow()">3. Test Play Button Flow</button>
+                <button onclick="testCardSelectionSystem()">4. Test Card Selection System</button>
+                <button onclick="runFullGameTest()">5. Run Full Game Test</button>
+                <button onclick="clearDebugOutput()">Clear Output</button>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>Debug Output</h3>
+            <div id="debug-output" class="debug-output"></div>
+        </div>
+
+        <!-- Game Setup -->
+        <div id="game-setup" class="game-setup">
+            <h2>Game Setup</h2>
+            <div class="setup-section">
+                <label for="player-count">Number of Players:</label>
+                <select id="player-count">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                </select>
+            </div>
+            
+            <div id="player-names" class="setup-section">
+                <!-- Player name inputs will be generated here -->
+            </div>
+            
+            <button id="start-game-btn" class="start-btn">Start Game</button>
+            <div id="setup-error" class="error-message hidden"></div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="game-area hidden">
+            <!-- Content will be dynamically generated -->
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        let debugOutput = document.getElementById('debug-output');
+        let testGameManager = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : type === 'info' ? 'info' : '';
+            debugOutput.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearDebugOutput() {
+            debugOutput.innerHTML = '';
+        }
+
+        function testGameInitialization() {
+            log('🎮 Testing Game Initialization...', 'info');
+            
+            try {
+                // Initialize game state
+                window.gameState = new GameState();
+                gameState.initializeGame(['Player 1', 'Player 2', 'Player 3']);
+                
+                log(`✅ Game state created`, 'success');
+                log(`Players: ${gameState.players.map(p => p.name).join(', ')}`, 'info');
+                log(`Initial current player index: ${gameState.currentPlayerIndex}`, 'info');
+                log(`Initial current player: ${gameState.getCurrentPlayer().name}`, 'info');
+                
+                // Test deck initialization
+                const success = initializeDecks(gameState);
+                log(`Deck initialization: ${success ? 'SUCCESS' : 'FAILED'}`, success ? 'success' : 'error');
+                
+                if (success) {
+                    log(`Game phase after deck init: ${gameState.gamePhase}`, 'info');
+                    log(`Current player after determineFirstPlayer: ${gameState.getCurrentPlayer().name}`, 'info');
+                    log(`Current player index after determineFirstPlayer: ${gameState.currentPlayerIndex}`, 'info');
+                    
+                    // Check face-up cards for first player determination
+                    gameState.players.forEach((player, index) => {
+                        const faceUpCards = player.faceUpCards.map(c => c.toString()).join(', ');
+                        log(`${player.name} face-up cards: ${faceUpCards}`, 'info');
+                    });
+                }
+                
+            } catch (error) {
+                log(`❌ Error in game initialization: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function testExchangePhaseStart() {
+            log('🔄 Testing Exchange Phase Start...', 'info');
+            
+            try {
+                if (!gameState) {
+                    log('⚠️ No game state - running initialization first', 'warning');
+                    testGameInitialization();
+                }
+                
+                log(`Game phase: ${gameState.gamePhase}`, 'info');
+                log(`Current player at exchange start: ${gameState.getCurrentPlayer().name}`, 'info');
+                log(`Current player index at exchange start: ${gameState.currentPlayerIndex}`, 'info');
+                
+                // Initialize game manager and render exchange phase
+                testGameManager = new GameManager();
+                testGameManager.showGameArea();
+                
+                // Check what gets rendered
+                const exchangeHeader = document.querySelector('.exchange-progress');
+                if (exchangeHeader) {
+                    log(`Exchange header text: ${exchangeHeader.textContent}`, 'info');
+                } else {
+                    log('❌ Exchange header not found', 'error');
+                }
+                
+                // Test the exchange phase progression
+                log('Testing exchange phase progression...', 'info');
+                
+                // Simulate confirming exchanges for each player
+                for (let i = 0; i < gameState.players.length; i++) {
+                    const currentPlayer = gameState.getCurrentPlayer();
+                    log(`Exchange turn ${i + 1}: ${currentPlayer.name} (index ${gameState.currentPlayerIndex})`, 'info');
+                    
+                    if (i < gameState.players.length - 1) {
+                        // Simulate confirm exchanges (but don't actually call it to avoid UI changes)
+                        const nextIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                        log(`Next player would be index ${nextIndex}: ${gameState.players[nextIndex].name}`, 'info');
+                    } else {
+                        log('This would be the last player - exchange phase would finish', 'info');
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ Error testing exchange phase: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function testPlayButtonFlow() {
+            log('🎯 Testing Play Button Flow...', 'info');
+            
+            try {
+                if (!gameState) {
+                    log('⚠️ No game state - running initialization first', 'warning');
+                    testGameInitialization();
+                }
+                
+                // Set to playing phase
+                gameState.gamePhase = GAME_PHASES.PLAYING;
+                gameState.currentPlayerIndex = 0;
+                
+                if (!testGameManager) {
+                    testGameManager = new GameManager();
+                }
+                
+                testGameManager.renderGameBoard();
+                testGameManager.attachGameEventListeners();
+                
+                log(`Game phase: ${gameState.gamePhase}`, 'info');
+                log(`Current player: ${gameState.getCurrentPlayer().name}`, 'info');
+                
+                // Test selectedCards initialization
+                log(`selectedCards property exists: ${testGameManager.hasOwnProperty('selectedCards')}`, 'info');
+                log(`selectedCards is array: ${Array.isArray(testGameManager.selectedCards)}`, 'info');
+                log(`selectedCards length: ${testGameManager.selectedCards ? testGameManager.selectedCards.length : 'undefined'}`, 'info');
+                
+                // Test card selection
+                const selectableCards = document.querySelectorAll('.card.selectable');
+                log(`Found ${selectableCards.length} selectable cards`, 'info');
+                
+                if (selectableCards.length > 0) {
+                    const firstCard = selectableCards[0];
+                    log(`Testing selection of card: ${firstCard.dataset.cardId}`, 'info');
+                    
+                    // Simulate click
+                    firstCard.click();
+                    
+                    // Check results
+                    const hasSelectedClass = firstCard.classList.contains('selected');
+                    const selectedCards = testGameManager.getSelectedCards();
+                    
+                    log(`Card has selected class: ${hasSelectedClass}`, hasSelectedClass ? 'success' : 'error');
+                    log(`Selected cards array length: ${selectedCards.length}`, selectedCards.length > 0 ? 'success' : 'error');
+                    
+                    if (selectedCards.length > 0) {
+                        // Test play button
+                        const playButton = document.getElementById('play-selected-btn');
+                        if (playButton) {
+                            log(`Play button found: ${!playButton.disabled}`, 'info');
+                            log(`Play button classes: ${playButton.className}`, 'info');
+                            
+                            // Test validation
+                            const gameStateValid = testGameManager.validateGameStateForPlay();
+                            log(`Game state validation: ${gameStateValid}`, gameStateValid ? 'success' : 'error');
+                            
+                            const validationResult = testGameManager.validateCardPlay(selectedCards);
+                            log(`Card play validation: ${validationResult.valid} - ${validationResult.message}`, validationResult.valid ? 'success' : 'error');
+                            
+                            // Test the actual play function
+                            log('Testing playSelectedCards function...', 'info');
+                            
+                            // Override executeCardPlayWithAnimation to see if it gets called
+                            const originalExecute = testGameManager.executeCardPlayWithAnimation;
+                            let executeCalled = false;
+                            testGameManager.executeCardPlayWithAnimation = function(cards) {
+                                executeCalled = true;
+                                log(`✅ executeCardPlayWithAnimation called with ${cards.length} cards`, 'success');
+                                log(`Cards to play: ${cards.map(c => c.card.toString()).join(', ')}`, 'info');
+                                return true;
+                            };
+                            
+                            // Test the play function
+                            testGameManager.playSelectedCards();
+                            
+                            // Check if execute was called
+                            if (!executeCalled) {
+                                log(`❌ executeCardPlayWithAnimation was NOT called`, 'error');
+                            }
+                            
+                            // Restore original function
+                            testGameManager.executeCardPlayWithAnimation = originalExecute;
+                            
+                        } else {
+                            log('❌ Play button not found', 'error');
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ Error testing play button flow: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function testCardSelectionSystem() {
+            log('🃏 Testing Card Selection System...', 'info');
+            
+            try {
+                if (!testGameManager) {
+                    log('⚠️ No game manager - running play button test first', 'warning');
+                    testPlayButtonFlow();
+                }
+                
+                // Test selection system initialization
+                log('Testing selection system initialization...', 'info');
+                testGameManager.initializeSelectedCards();
+                
+                log(`selectedCards after init: ${Array.isArray(testGameManager.selectedCards)}`, 'info');
+                log(`selectedCards length after init: ${testGameManager.selectedCards.length}`, 'info');
+                
+                // Test card finding
+                const currentPlayer = gameState.getCurrentPlayer();
+                if (currentPlayer.handCards.length > 0) {
+                    const testCard = currentPlayer.handCards[0];
+                    const foundCard = testGameManager.findCardById(testCard.id);
+                    log(`Card finding test: ${foundCard ? 'SUCCESS' : 'FAILED'}`, foundCard ? 'success' : 'error');
+                    if (foundCard) {
+                        log(`Found card: ${foundCard.toString()}`, 'info');
+                    }
+                }
+                
+                // Test selection/deselection
+                const selectableCards = document.querySelectorAll('.card.selectable');
+                if (selectableCards.length > 0) {
+                    const testCard = selectableCards[0];
+                    const cardId = testCard.dataset.cardId;
+                    
+                    log(`Testing add/remove selection for card: ${cardId}`, 'info');
+                    
+                    // Add to selection
+                    testGameManager.addToSelectedCards(cardId, testCard);
+                    log(`After add - selected count: ${testGameManager.getSelectedCards().length}`, 'info');
+                    
+                    // Remove from selection
+                    testGameManager.removeFromSelectedCards(cardId);
+                    log(`After remove - selected count: ${testGameManager.getSelectedCards().length}`, 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ Error testing card selection system: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function runFullGameTest() {
+            log('🎮 Running Full Game Test...', 'info');
+            
+            try {
+                log('=== FULL GAME TEST START ===', 'info');
+                
+                // Step 1: Initialize
+                testGameInitialization();
+                
+                // Step 2: Test exchange phase
+                testExchangePhaseStart();
+                
+                // Step 3: Test play button
+                testPlayButtonFlow();
+                
+                // Step 4: Test card selection
+                testCardSelectionSystem();
+                
+                log('=== FULL GAME TEST COMPLETE ===', 'success');
+                
+                // Summary
+                log('🔍 ISSUE ANALYSIS:', 'warning');
+                log('1. Exchange Phase Player Order: Check logs above for current player at exchange start', 'info');
+                log('2. Play Button Execution: Check if executeCardPlayWithAnimation was called', 'info');
+                
+            } catch (error) {
+                log(`❌ Error in full game test: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            log('🚀 Comprehensive Debug Test loaded', 'success');
+            log('Click test buttons above to debug specific issues', 'info');
+            
+            // Generate player name inputs
+            const playerCount = document.getElementById('player-count').value;
+            generatePlayerNameInputs(parseInt(playerCount));
+        });
+
+        function generatePlayerNameInputs(count) {
+            const container = document.getElementById('player-names');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= count; i++) {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label for="player-${i}">Player ${i}:</label>
+                    <input type="text" id="player-${i}" value="Player ${i}">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        document.getElementById('player-count').addEventListener('change', (e) => {
+            generatePlayerNameInputs(parseInt(e.target.value));
+        });
+
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            log('🎮 Starting game via UI...', 'info');
+            
+            const playerCount = parseInt(document.getElementById('player-count').value);
+            const names = [];
+            for (let i = 1; i <= playerCount; i++) {
+                names.push(document.getElementById(`player-${i}`).value);
+            }
+            
+            log(`Starting game with: ${names.join(', ')}`, 'info');
+            
+            // Initialize game
+            window.gameState = new GameState();
+            gameState.initializeGame(names);
+            initializeDecks(gameState);
+            
+            // Initialize manager
+            testGameManager = new GameManager();
+            testGameManager.hideSetup();
+            testGameManager.showGameArea();
+            
+            log(`Game started - Current player: ${gameState.getCurrentPlayer().name}`, 'info');
+        });
+    </script>
+</body>
+</html> 

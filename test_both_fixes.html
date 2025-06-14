@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Both Fixes Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .fix-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Both Fixes Test</h1>
+        
+        <div class="fix-info">
+            <h3>✅ Fixes Applied:</h3>
+            <ol>
+                <li><strong>Exchange Phase Fix:</strong> Exchange phase now starts with Player 1, then cycles through all players. The actual game starts with the player who has the lowest face-up card.</li>
+                <li><strong>Play Button Fix:</strong> Moved <code>clearAllSelections()</code> to the end of <code>executeCardPlay()</code> so it only clears after successful play execution, not before the 400ms animation delay.</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 Test Instructions:</h3>
+            <ol>
+                <li>Start a new game below</li>
+                <li><strong>Verify Exchange Phase:</strong> Should start with "Player 1" in the exchange header</li>
+                <li>Complete all exchange phases</li>
+                <li><strong>Verify Game Start:</strong> Should start with the player who has the lowest face-up card</li>
+                <li><strong>Verify Play Button:</strong> Select cards and click "Play Selected Cards" - should work properly</li>
+            </ol>
+        </div>
+
+        <!-- Game Setup -->
+        <div id="game-setup" class="game-setup">
+            <h2>Game Setup</h2>
+            <div class="setup-section">
+                <label for="player-count">Number of Players:</label>
+                <select id="player-count">
+                    <option value="2">2 Players</option>
+                    <option value="3" selected>3 Players</option>
+                    <option value="4">4 Players</option>
+                </select>
+            </div>
+            
+            <div id="player-names" class="setup-section">
+                <div>
+                    <label for="player-1">Player 1:</label>
+                    <input type="text" id="player-1" value="Player 1">
+                </div>
+                <div>
+                    <label for="player-2">Player 2:</label>
+                    <input type="text" id="player-2" value="Player 2">
+                </div>
+                <div>
+                    <label for="player-3">Player 3:</label>
+                    <input type="text" id="player-3" value="Player 3">
+                </div>
+            </div>
+            
+            <button id="start-game-btn" class="start-btn">Start Game</button>
+            <div id="setup-error" class="error-message hidden"></div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="game-area hidden">
+            <!-- Content will be dynamically generated -->
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <h3>Debug Information</h3>
+            <div id="debug-content"></div>
+            <button id="toggle-debug" class="control-btn secondary">Show Debug</button>
+            <button id="refresh-state-btn" class="control-btn secondary">Refresh State</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // Initialize the game manager
+        const gameManager = new GameManager();
+        gameManager.init();
+        
+        // Override console.log to capture important messages
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            
+            // Capture important game flow messages
+            const message = args.join(' ');
+            if (message.includes('Exchange phase will start with') || 
+                message.includes('Starting actual game with') ||
+                message.includes('First player determined') ||
+                message.includes('played:')) {
+                
+                // Show these messages in the UI
+                const debugContent = document.getElementById('debug-content');
+                if (debugContent) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    debugContent.innerHTML += `<div style="color: #28a745; font-weight: bold;">[${timestamp}] ${message}</div>`;
+                }
+            }
+        };
+        
+        // Add some visual feedback for successful fixes
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎯 Both Fixes Test loaded - ready to test!');
+            
+            // Show debug panel by default for this test
+            const debugPanel = document.getElementById('debug-panel');
+            const toggleBtn = document.getElementById('toggle-debug');
+            if (debugPanel && toggleBtn) {
+                debugPanel.classList.remove('hidden');
+                toggleBtn.textContent = 'Hide Debug';
+            }
+        });
+        
+        // Update player name inputs when count changes
+        document.getElementById('player-count').addEventListener('change', (e) => {
+            const count = parseInt(e.target.value);
+            const container = document.getElementById('player-names');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= count; i++) {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label for="player-${i}">Player ${i}:</label>
+                    <input type="text" id="player-${i}" value="Player ${i}">
+                `;
+                container.appendChild(div);
+            }
+        });
+    </script>
+</body>
+</html> 

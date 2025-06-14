@@ -372,8 +372,7 @@ function determineFirstPlayer(gameState) {
         });
     });
     
-    console.log(`First player: ${gameState.players[firstPlayerIndex].name} (has ${lowestCard?.toString() || 'unknown card'})`);
-    gameState.currentPlayerIndex = firstPlayerIndex;
+    console.log(`First player determined: ${gameState.players[firstPlayerIndex].name} (has ${lowestCard?.toString() || 'unknown card'})`);
     return firstPlayerIndex;
 }
 
@@ -381,8 +380,18 @@ function determineFirstPlayer(gameState) {
 function initializeDecks(gameState) {
     const success = dealInitialCards(gameState);
     if (success) {
-        determineFirstPlayer(gameState);
+        // Determine who will go first in the actual game (but don't set it yet)
+        const firstPlayerIndex = determineFirstPlayer(gameState);
+        
+        // Store the determined first player for later use
+        gameState.determinedFirstPlayerIndex = firstPlayerIndex;
+        
+        // Exchange phase always starts with Player 1 (index 0)
+        gameState.currentPlayerIndex = 0;
         gameState.gamePhase = GAME_PHASES.EXCHANGE;
+        
+        console.log(`Exchange phase will start with ${gameState.players[0].name}`);
+        console.log(`Actual game will start with ${gameState.players[firstPlayerIndex].name}`);
     }
     return success;
 }
@@ -1099,8 +1108,10 @@ const setupScreen = {
         // Set game phase to playing
         gameState.gamePhase = GAME_PHASES.PLAYING;
         
-        // Reset to first player for actual gameplay
-        gameState.currentPlayerIndex = 0;
+        // Set to the determined first player for actual gameplay
+        gameState.currentPlayerIndex = gameState.determinedFirstPlayerIndex || 0;
+        
+        console.log(`Starting actual game with ${gameState.getCurrentPlayer().name}`);
         
         // Render the main game board
         this.renderGameBoard();
@@ -1970,11 +1981,8 @@ const setupScreen = {
             
             console.log(`Playing ${selectedCards.length} cards:`, selectedCards.map(item => item.card.toString()));
             
-                // Execute the play with animation
-    this.executeCardPlayWithAnimation(selectedCards);
-    
-    // Clear selection after playing
-    this.clearAllSelections();
+            // Execute the play with animation
+            this.executeCardPlayWithAnimation(selectedCards);
             
         } catch (error) {
             this.showError('GAME_STATE_ERROR', 'Error during card play', {
@@ -2117,6 +2125,9 @@ const setupScreen = {
         
         // Update display
         this.updateGameBoardDisplay();
+        
+        // Clear selection after successful play
+        this.clearAllSelections();
     },
     
     // Handle face-down card plays (blind plays)
@@ -2166,6 +2177,9 @@ const setupScreen = {
         
         // Update display
         this.updateGameBoardDisplay();
+        
+        // Clear selection after face-down play
+        this.clearAllSelections();
     },
     
     // Enhanced special card effects detection

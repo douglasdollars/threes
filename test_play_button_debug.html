@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Button Debug Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .debug-section {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .debug-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .test-controls {
+            margin: 10px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #218838;
+        }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Play Button Debug Test</h1>
+        
+        <div class="debug-section">
+            <h3>Test Controls</h3>
+            <div class="test-controls">
+                <button onclick="initializeTestGame()">Initialize Test Game</button>
+                <button onclick="testCardSelection()">Test Card Selection</button>
+                <button onclick="testPlayButton()">Test Play Button</button>
+                <button onclick="debugSelectedCards()">Debug Selected Cards</button>
+                <button onclick="debugGameState()">Debug Game State</button>
+                <button onclick="clearDebugOutput()">Clear Output</button>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>Debug Output</h3>
+            <div id="debug-output" class="debug-output"></div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="game-area hidden">
+            <div class="game-board">
+                <!-- Current Player Area -->
+                <div class="current-player-area">
+                    <h3>Your Cards</h3>
+                    <div class="player-cards-container">
+                        <div class="card-section">
+                            <h4>Hand Cards</h4>
+                            <div id="current-player-hand" class="card-area hand-cards"></div>
+                        </div>
+                        <div class="card-section">
+                            <h4>Face Up Cards</h4>
+                            <div id="current-player-face-up" class="card-area face-up-cards"></div>
+                        </div>
+                        <div class="card-section">
+                            <h4>Face Down Cards</h4>
+                            <div id="current-player-face-down" class="card-area face-down-cards"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Area -->
+                <div class="center-area">
+                    <div class="pile-area">
+                        <div class="pile-section">
+                            <h4>Draw Pile</h4>
+                            <div id="draw-pile" class="pile draw-pile"></div>
+                        </div>
+                        <div class="pile-section">
+                            <h4>Discard Pile</h4>
+                            <div id="discard-pile" class="pile discard-pile"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Controls -->
+                <div class="game-controls">
+                    <div id="selection-info" class="selection-info">No cards selected</div>
+                    <div class="control-buttons">
+                        <button id="play-selected-btn" class="control-btn primary">Play Selected Cards</button>
+                        <button id="pick-up-pile-btn" class="control-btn secondary">Pick Up Pile</button>
+                        <button id="pass-turn-btn" class="control-btn secondary">Pass Turn</button>
+                        <button id="clear-selection-btn" class="control-btn secondary">Clear Selection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        let debugOutput = document.getElementById('debug-output');
+        let testGameManager = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            debugOutput.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearDebugOutput() {
+            debugOutput.innerHTML = '';
+        }
+
+        function initializeTestGame() {
+            try {
+                log('🎮 Initializing test game...', 'info');
+                
+                // Initialize game state
+                window.gameState = new GameState();
+                gameState.initializeGame(['Test Player', 'AI Player']);
+                
+                // Set to playing phase
+                gameState.gamePhase = GAME_PHASES.PLAYING;
+                
+                // Initialize game manager
+                testGameManager = new GameManager();
+                testGameManager.showGameArea();
+                testGameManager.renderGameBoard();
+                
+                // Attach event listeners
+                testGameManager.attachGameEventListeners();
+                
+                log('✅ Test game initialized successfully', 'success');
+                log(`Current player: ${gameState.getCurrentPlayer().name}`, 'info');
+                log(`Game phase: ${gameState.gamePhase}`, 'info');
+                log(`Current player hand cards: ${gameState.getCurrentPlayer().handCards.length}`, 'info');
+                
+            } catch (error) {
+                log(`❌ Error initializing test game: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function testCardSelection() {
+            try {
+                log('🃏 Testing card selection...', 'info');
+                
+                if (!testGameManager) {
+                    log('❌ Test game not initialized', 'error');
+                    return;
+                }
+
+                const currentPlayer = gameState.getCurrentPlayer();
+                if (!currentPlayer) {
+                    log('❌ No current player found', 'error');
+                    return;
+                }
+
+                // Find selectable cards
+                const selectableCards = document.querySelectorAll('.card.selectable');
+                log(`Found ${selectableCards.length} selectable cards`, 'info');
+
+                if (selectableCards.length === 0) {
+                    log('❌ No selectable cards found', 'error');
+                    return;
+                }
+
+                // Try to select the first card
+                const firstCard = selectableCards[0];
+                log(`Attempting to select card: ${firstCard.dataset.cardId}`, 'info');
+                
+                // Simulate click
+                firstCard.click();
+                
+                // Check if card was selected
+                const hasSelectedClass = firstCard.classList.contains('selected');
+                log(`Card has 'selected' class: ${hasSelectedClass}`, hasSelectedClass ? 'success' : 'error');
+                
+                // Check selectedCards array
+                const selectedCards = testGameManager.getSelectedCards();
+                log(`Selected cards array length: ${selectedCards.length}`, selectedCards.length > 0 ? 'success' : 'error');
+                
+                if (selectedCards.length > 0) {
+                    selectedCards.forEach((item, index) => {
+                        log(`Selected card ${index + 1}: ${item.card.toString()} (ID: ${item.id})`, 'info');
+                    });
+                }
+
+            } catch (error) {
+                log(`❌ Error testing card selection: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function testPlayButton() {
+            try {
+                log('🎯 Testing play button...', 'info');
+                
+                if (!testGameManager) {
+                    log('❌ Test game not initialized', 'error');
+                    return;
+                }
+
+                // Check if cards are selected
+                const selectedCards = testGameManager.getSelectedCards();
+                log(`Selected cards before play: ${selectedCards.length}`, 'info');
+                
+                if (selectedCards.length === 0) {
+                    log('⚠️ No cards selected - selecting a card first', 'warning');
+                    testCardSelection();
+                    
+                    // Re-check after selection
+                    const newSelectedCards = testGameManager.getSelectedCards();
+                    if (newSelectedCards.length === 0) {
+                        log('❌ Still no cards selected after selection attempt', 'error');
+                        return;
+                    }
+                }
+
+                // Get play button
+                const playButton = document.getElementById('play-selected-btn');
+                if (!playButton) {
+                    log('❌ Play button not found', 'error');
+                    return;
+                }
+
+                log('🔍 Debugging play button state...', 'info');
+                log(`Button disabled: ${playButton.disabled}`, 'info');
+                log(`Button classes: ${playButton.className}`, 'info');
+
+                // Test validation functions
+                log('🔍 Testing validation functions...', 'info');
+                
+                const gameStateValid = testGameManager.validateGameStateForPlay();
+                log(`Game state validation: ${gameStateValid}`, gameStateValid ? 'success' : 'error');
+                
+                const selectedCardsForValidation = testGameManager.getSelectedCards();
+                log(`Selected cards for validation: ${selectedCardsForValidation.length}`, 'info');
+                
+                if (selectedCardsForValidation.length > 0) {
+                    const validationResult = testGameManager.validateCardPlay(selectedCardsForValidation);
+                    log(`Card play validation: ${validationResult.valid} - ${validationResult.message}`, validationResult.valid ? 'success' : 'error');
+                }
+
+                // Simulate button click
+                log('🖱️ Simulating play button click...', 'info');
+                playButton.click();
+                
+                // Check if cards were played
+                setTimeout(() => {
+                    const remainingSelected = testGameManager.getSelectedCards();
+                    log(`Selected cards after play attempt: ${remainingSelected.length}`, 'info');
+                    
+                    if (remainingSelected.length === 0) {
+                        log('✅ Cards appear to have been played (selection cleared)', 'success');
+                    } else {
+                        log('❌ Cards still selected - play may have failed', 'error');
+                    }
+                }, 100);
+
+            } catch (error) {
+                log(`❌ Error testing play button: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function debugSelectedCards() {
+            try {
+                log('🔍 Debugging selected cards state...', 'info');
+                
+                if (!testGameManager) {
+                    log('❌ Test game not initialized', 'error');
+                    return;
+                }
+
+                // Check selectedCards array
+                const selectedCards = testGameManager.getSelectedCards();
+                log(`Selected cards array: ${JSON.stringify(selectedCards, null, 2)}`, 'info');
+                
+                // Check DOM selected cards
+                const domSelectedCards = document.querySelectorAll('.card.selected');
+                log(`DOM selected cards: ${domSelectedCards.length}`, 'info');
+                
+                domSelectedCards.forEach((card, index) => {
+                    log(`DOM selected card ${index + 1}: ID=${card.dataset.cardId}, Rank=${card.dataset.rank}, Suit=${card.dataset.suit}`, 'info');
+                });
+
+                // Check if selectedCards is initialized
+                log(`selectedCards property exists: ${testGameManager.hasOwnProperty('selectedCards')}`, 'info');
+                log(`selectedCards is array: ${Array.isArray(testGameManager.selectedCards)}`, 'info');
+
+            } catch (error) {
+                log(`❌ Error debugging selected cards: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function debugGameState() {
+            try {
+                log('🎮 Debugging game state...', 'info');
+                
+                if (!gameState) {
+                    log('❌ Game state not found', 'error');
+                    return;
+                }
+
+                log(`Game phase: ${gameState.gamePhase}`, 'info');
+                log(`Current player index: ${gameState.currentPlayerIndex}`, 'info');
+                
+                const currentPlayer = gameState.getCurrentPlayer();
+                if (currentPlayer) {
+                    log(`Current player: ${currentPlayer.name}`, 'info');
+                    log(`Player active: ${currentPlayer.isActive}`, 'info');
+                    log(`Hand cards: ${currentPlayer.handCards.length}`, 'info');
+                    log(`Face up cards: ${currentPlayer.faceUpCards.length}`, 'info');
+                    log(`Face down cards: ${currentPlayer.faceDownCards.length}`, 'info');
+                } else {
+                    log('❌ No current player found', 'error');
+                }
+
+                log(`Discard pile: ${gameState.discardPile.length} cards`, 'info');
+                if (gameState.discardPile.length > 0) {
+                    const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+                    log(`Top discard card: ${topCard.toString()}`, 'info');
+                }
+
+            } catch (error) {
+                log(`❌ Error debugging game state: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Override console methods to capture logs
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('Playing')) {
+                log(`Console: ${args.join(' ')}`, 'info');
+            }
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            log(`Console Error: ${args.join(' ')}`, 'error');
+        };
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            log('🚀 Debug test page loaded', 'success');
+            log('Click "Initialize Test Game" to start debugging', 'info');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Button Fix Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-info {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Play Button Fix Test</h1>
+        
+        <div class="test-info">
+            <h3>✅ Bug Fix Applied</h3>
+            <p><strong>Issue:</strong> Cards could be selected but "Play Selected Card" button didn't execute the play.</p>
+            <p><strong>Root Cause:</strong> <code>clearAllSelections()</code> was being called immediately in <code>playSelectedCards()</code>, clearing the selection before the 400ms animation delay completed and <code>executeCardPlay()</code> was called.</p>
+            <p><strong>Fix:</strong> Moved <code>clearAllSelections()</code> to the end of <code>executeCardPlay()</code> and <code>handleFaceDownCardPlay()</code> functions, so it only clears after successful play execution.</p>
+        </div>
+
+        <div class="test-info">
+            <h3>🎮 Test Instructions</h3>
+            <ol>
+                <li>Click "Start Game" below</li>
+                <li>Complete the exchange phase</li>
+                <li>Select one or more cards of the same rank</li>
+                <li>Click "Play Selected Cards"</li>
+                <li>Verify the cards are played successfully</li>
+            </ol>
+        </div>
+
+        <!-- Game Setup -->
+        <div id="game-setup" class="game-setup">
+            <h2>Game Setup</h2>
+            <div class="setup-section">
+                <label for="player-count">Number of Players:</label>
+                <select id="player-count">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                </select>
+            </div>
+            
+            <div id="player-names" class="setup-section">
+                <!-- Player name inputs will be generated here -->
+            </div>
+            
+            <button id="start-game-btn" class="start-btn">Start Game</button>
+            <div id="setup-error" class="error-message hidden"></div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="game-area hidden">
+            <!-- Exchange Phase -->
+            <div id="exchange-phase" class="exchange-phase hidden">
+                <h2>Exchange Phase</h2>
+                <p>Select cards to exchange between your hand and face-up cards.</p>
+                
+                <div class="exchange-container">
+                    <div class="exchange-section">
+                        <h3>Hand Cards</h3>
+                        <div id="exchange-hand-cards" class="exchange-cards"></div>
+                    </div>
+                    
+                    <div class="exchange-section">
+                        <h3>Face Up Cards</h3>
+                        <div id="exchange-face-up-cards" class="exchange-cards"></div>
+                    </div>
+                </div>
+                
+                <div class="exchange-controls">
+                    <button id="confirm-exchanges-btn" class="control-btn primary">Confirm Exchanges</button>
+                    <button id="reset-exchanges-btn" class="control-btn secondary">Reset</button>
+                </div>
+            </div>
+
+            <!-- Main Game -->
+            <div id="main-game" class="main-game hidden">
+                <div class="game-board">
+                    <!-- Current Player Area -->
+                    <div class="current-player-area">
+                        <h3>Your Cards</h3>
+                        <div class="player-cards-container">
+                            <div class="card-section">
+                                <h4>Hand Cards</h4>
+                                <div id="current-player-hand" class="card-area hand-cards"></div>
+                            </div>
+                            <div class="card-section">
+                                <h4>Face Up Cards</h4>
+                                <div id="current-player-face-up" class="card-area face-up-cards"></div>
+                            </div>
+                            <div class="card-section">
+                                <h4>Face Down Cards</h4>
+                                <div id="current-player-face-down" class="card-area face-down-cards"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Players -->
+                    <div id="other-players" class="other-players-area"></div>
+
+                    <!-- Center Area -->
+                    <div class="center-area">
+                        <div class="pile-area">
+                            <div class="pile-section">
+                                <h4>Draw Pile</h4>
+                                <div id="draw-pile" class="pile draw-pile"></div>
+                            </div>
+                            <div class="pile-section">
+                                <h4>Discard Pile</h4>
+                                <div id="discard-pile" class="pile discard-pile"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game Controls -->
+                    <div class="game-controls">
+                        <div id="selection-info" class="selection-info">No cards selected</div>
+                        <div class="control-buttons">
+                            <button id="play-selected-btn" class="control-btn primary">Play Selected Cards</button>
+                            <button id="pick-up-pile-btn" class="control-btn secondary">Pick Up Pile</button>
+                            <button id="pass-turn-btn" class="control-btn secondary">Pass Turn</button>
+                            <button id="clear-selection-btn" class="control-btn secondary">Clear Selection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <h3>Debug Information</h3>
+            <div id="debug-content"></div>
+            <button id="toggle-debug" class="control-btn secondary">Show Debug</button>
+            <button id="refresh-state-btn" class="control-btn secondary">Refresh State</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // Initialize the game
+        const gameManager = new GameManager();
+        gameManager.init();
+        
+        // Add some visual feedback for successful fix
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎯 Play Button Fix Test loaded - ready to test!');
+        });
+    </script>
+</body>
+</html> 
