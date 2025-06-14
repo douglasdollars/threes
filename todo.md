@@ -264,32 +264,32 @@
 
 ### Play Validation System
 
-- [ ] Create `canPlayCards()` function to check if cards can be played
-- [ ] Compare selected cards with top of discard pile
-- [ ] Handle special cases (empty pile, 2s wild cards)
-- [ ] Validate card rank consistency in selection
+- [x] Create `canPlayCards()` function to check if cards can be played
+- [x] Compare selected cards with top of discard pile
+- [x] Handle special cases (empty pile, 2s wild cards)
+- [x] Validate card rank consistency in selection
 
 ### Card Playing Mechanics
 
-- [ ] Implement `playSelectedCards()` function
-- [ ] Move cards from hand to discard pile
-- [ ] Update game state after successful play
-- [ ] Handle draw pile replenishment after play
+- [x] Implement `playSelectedCards()` function
+- [x] Move cards from hand to discard pile
+- [x] Update game state after successful play
+- [x] Handle draw pile replenishment after play
 
 ### Basic Turn Flow
 
-- [ ] Connect "Play Selected Cards" button functionality
-- [ ] Add card validation before play
-- [ ] Display error messages for invalid plays
-- [ ] Implement automatic hand replenishment from draw pile
+- [x] Connect "Play Selected Cards" button functionality
+- [x] Add card validation before play
+- [x] Display error messages for invalid plays
+- [x] Implement automatic hand replenishment from draw pile
 
 ### Game State Updates
 
-- [ ] Update discard pile display after play
-- [ ] Update player hand display
-- [ ] Update draw pile count
-- [ ] Check for phase transitions (hand → face-up → face-down)
-- [ ] Test various card combinations and validation
+- [x] Update discard pile display after play
+- [x] Update player hand display
+- [x] Update draw pile count
+- [x] Check for phase transitions (hand → face-up → face-down)
+- [x] Test various card combinations and validation
 
 ## ✅ Step 10: Pile Management
 
